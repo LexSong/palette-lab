@@ -1,64 +1,75 @@
 # Twelve Colors, No Confusion
 
-Twelve-color palettes for charts, maps, and dashboards. Most categorical
-palettes blur together well before hitting twelve categories, so each of
-these was searched by directly maximizing CIEDE2000 instead — the metric
-closest to how people actually judge color similarity. Every color stays
-inside sRGB, so it renders the same on any screen.
+Twelve categories on one chart, and every one of them tells itself apart.
 
-Each palette splits its twelve colors across two Oklab rings — a ring being
-one fixed lightness and chroma, varying only in hue — and holds both rings to
-the same chroma. Sharing chroma is what keeps a palette reading as one
-deliberate set instead of a grab bag of colors from two different families.
-
-Colors within each palette are sorted by hue below, not by which ring they
-came from, so the two rows compare at a glance.
-
-## The palettes
-
-### 6+6 — the more separated of the two
+## 6+6 — The More Separated of the Two
 
 ![6+6](images/6+6.png)
 
-### 5+7 — the more vivid of the two
+The safe pick. Six light, six dark, and no two of them ever get mistaken for
+each other. Drop it into a twelve-series chart and stop thinking about the
+legend.
+
+## 5+7 — The More Vivid of the Two
 
 ![5+7](images/5+7.png)
 
-`6+6` splits its twelve colors evenly and holds the largest worst-pair
-distance of any layout tried. `5+7` splits them unevenly, five and seven,
-which frees up room for a higher shared chroma — its colors sit more
-saturated, at a small cost to that worst-pair distance.
+Same twelve slots, more color. An uneven split buys extra saturation, so the
+chart comes out lively and still reads clean. Take this one when the deck has
+to look good, not only work.
 
-### Variation: 5+7 without the shared chroma
+## Why and How
+
+You have twelve things to plot and one chart to plot them in. Pick the colors
+by hand and two of them always land too close, so your reader ends up looking
+back at the legend to check which line was which. Most ready-made palettes
+have the same problem — they hold up to about eight colors and quietly fall
+apart after that.
+
+**Every pair was checked, not just the palette as a whole.** Twelve colors
+make 66 possible pairs. These were found by scoring all 66 and pushing the
+*closest* one as far apart as it would go. Averages are the trap: a palette
+can average beautifully while two of its colors stay twins. Here the weakest
+pair is as strong as it can be, and the weakest pair is the only one your
+reader will ever trip on.
+
+**Half the colors are light, half are dark.** That is the move that makes
+twelve work. Ask hue alone to do the job and the palette comes out about half
+as clear, because there simply is not room for twelve distinguishable hues.
+Add a light-dark difference and the eye gets a second thing to sort by, so
+neighbors stop competing.
+
+**They still look like a set.** Every color carries the same saturation, so
+the twelve read as one deliberate palette instead of twelve picks off a color
+wheel. And all of them sit inside sRGB — no wide-gamut monitor needed, nothing
+that dulls out on someone else's screen.
+
+Between the two: 6+6 is the most separated palette here, and 5+7 gives up a
+sliver of that for noticeably more saturation. Either is safe. The swatches
+above run in hue order so you can compare them row against row.
+
+### Variation: 5+7 Without the Shared Chroma
 
 ![5+7, one chroma per ring](images/5+7-alt.png)
 
-Let the two rings pick their own chroma instead of sharing one, and the
-5-color ring settles lower while the 7-color ring climbs higher — muted next
-to vivid, rather than uniform. It scores slightly higher than the shared
-version above once every color is rounded to 8-bit hex, at the cost of the
-two rings looking like they belong to different palettes.
+Let the light and dark halves pick their own saturation and one half turns
+muted next to the other. It separates a hair better than the 5+7 above, and it
+gives up the matched-set look. Take it only if you want that contrast — muted
+against vivid — on purpose.
 
-## Why these work
+## More Detail
 
-- **The worst pair is what was optimized, not the average.** The search
-  maximizes the *smallest* CIEDE2000 distance over all 66 pairs in the
-  palette — not the average pair, the closest one. Nothing in a palette is
-  more confusable than that.
-- **Every color stays in sRGB.** No color needs a wide-gamut display or gets
-  clipped and dulled on a normal one.
-
-The exact scores, the ΔE00 matrices, and the other layouts tried and dropped
-— including a plain `6+6` where each ring keeps its own chroma — are in
-[EXPERIMENTS.md](EXPERIMENTS.md).
-
-## Use a palette
-
-Each palette's full data — hue and chroma per color, which ring it's on, the
-CIEDE2000 matrix — is in `results/*.json` and loads with `palette_lab.palette.load`:
+Grab the hex codes off the swatches and you're done. If you want more, every
+palette ships its full data — hue and chroma per color, which ring it sits on,
+the CIEDE2000 matrix — in `results/*.json`, loaded by
+`palette_lab.palette.load`:
 
 ```sh
 uv run scripts/visualize_palette.py results/6+6-sharedC.json
 ```
 
-To regenerate everything from scratch, see [EXPERIMENTS.md](EXPERIMENTS.md#run-it).
+[EXPERIMENTS.md](EXPERIMENTS.md) has the exact scores, the ΔE00 matrices, the
+layouts that were tried and dropped — including a plain `6+6` where each ring
+keeps its own chroma — and how to regenerate all of it from scratch. It also
+answers the strangest result of the search: the two rings land on nearly the
+same hues, within 4°, which looks like a bug and is not.
