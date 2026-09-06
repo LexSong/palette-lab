@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Figures are regenerated from the JSON by scripts/visualize_palette.py.
+results/*.png

@@ -1,0 +1,20 @@
+# A finished diff is the only state worth rewriting mechanically, so formatting
+# runs here and nowhere else. pre-commit would otherwise fetch its own pinned
+# ruff and drift from the one on PATH, hence `local`/`system` hooks.
+repos:
+  - repo: local
+    hooks:
+      # Same args as conform.nvim's ruff_organize_imports, so the nvim keymap
+      # and this rewrite a file identically.
+      - id: ruff-organize-imports
+        name: ruff organize imports
+        entry: ruff check --fix --force-exclude --select=I001
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+      - id: ruff-format
+        name: ruff format
+        entry: ruff format --force-exclude
+        language: system
+        types_or: [python, pyi]
+        require_serial: true

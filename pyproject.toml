@@ -1,0 +1,35 @@
+[project]
+name = "palette-lab"
+version = "0.0.0"
+requires-python = ">=3.13, <3.14"
+dependencies = [
+    "cmaes>=0.11",
+    "colour-science>=0.4.6",
+    "matplotlib>=3.9",
+    "numpy>=2.1",
+    "scipy>=1.14",
+]
+
+[dependency-groups]
+dev = [
+    "coloraide>=4.0",
+    "pytest>=8.3",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint.isort]
+force-single-line = true
+known-first-party = ["palette_lab", "tests"]
