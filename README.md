@@ -1,11 +1,13 @@
-# palette-lab
+# Twelve Colors, No Confusion
 
-Four 12-color palettes, searched so that no two colors in a palette are easy to
-mix up. Every color renders inside plain sRGB, so any screen shows exactly the
-hex code below it.
+Twelve-color palettes for charts, maps, and dashboards. Most categorical
+palettes blur together well before hitting twelve categories, so each of
+these four was searched by directly maximizing CIEDE2000 instead — the metric
+closest to how people actually judge color similarity. Every color stays
+inside sRGB, so it renders the same on any screen.
 
-Colors within each palette are sorted by hue, not by which ring they came
-from, so the four rows compare at a glance.
+Colors within each palette are sorted by hue below, not by which ring they
+came from, so the four rows compare at a glance.
 
 ## The palettes
 
