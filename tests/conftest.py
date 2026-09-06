@@ -16,7 +16,12 @@ from palette_lab import color
 from palette_lab.palette import Palette
 from palette_lab.search import Layout
 
-EXPERIMENTS = [Layout((6, 6)), Layout((5, 7)), Layout((6, 6), shared_chroma=True)]
+EXPERIMENTS = [
+    Layout((6, 6)),
+    Layout((5, 7)),
+    Layout((6, 6), shared_chroma=True),
+    Layout((5, 7), shared_chroma=True),
+]
 
 
 def build_palette(layout, lightnesses=(0.55, 0.80), seed=0):

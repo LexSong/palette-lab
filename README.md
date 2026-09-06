@@ -19,8 +19,9 @@ One script per experiment. Each writes its own JSON, and `--plot` adds the figur
 uv run scripts/experiment_6plus6.py --plot                  # ~11 s -> results/6+6.json
 uv run scripts/experiment_5plus7.py --plot
 uv run scripts/experiment_6plus6_shared_chroma.py --plot
+uv run scripts/experiment_5plus7_shared_chroma.py --plot
 
-for e in scripts/experiment_*.py; do uv run "$e" --plot; done   # all three, ~32 s
+for e in scripts/experiment_*.py; do uv run "$e" --plot; done   # all four, ~43 s
 
 uv run scripts/visualize_palette.py results/6+6.json            # re-render one
 uv run scripts/visualize_palette.py results/6+6-sharedC.json --dark
@@ -33,10 +34,18 @@ uv run scripts/visualize_palette.py results/6+6-sharedC.json --dark
 | **6+6** | **25.12** | 24.76 | L=0.550 C=0.119, L=0.802 C=0.115 |
 | **6+6:C** | 25.07 | **24.88** | L=0.548, L=0.797, both C=0.119 |
 | 5+7 | 24.85 | 24.76 | L=0.497 C=0.096, L=0.719 C=0.153 |
+| 5+7:C | 24.82 | 24.67 | L=0.515, L=0.738, both C=0.137 |
 
 Pick `6+6` for the highest exact separation, `6+6:C` for the simpler palette that ships
-better. Sharing one chroma costs 0.20%, and it survives 8-bit quantization *better*,
-24.88 against 24.76.
+better. Sharing one chroma costs 0.20% there, and it survives 8-bit quantization
+*better*, 24.88 against 24.76.
+
+**Sharing costs less on the uneven split, which is the opposite of what it looks like.**
+Left free, `5+7` gives its rings 0.096 and 0.153, so one shared value has to move both a
+long way, against 0.004 apart on `6+6`. Yet `5+7:C` gives up 0.10% and `6+6:C` gives up
+0.20%. The reason is that the 5-ring's chroma was never the binding constraint, so
+raising it to 0.137 cost nothing and paid for what the 7-ring lost. At 8 bits the
+ordering flips back: `5+7:C` loses 0.08 to `5+7`, where `6+6:C` gains 0.12 over `6+6`.
 
 `6+6`:
 
@@ -54,8 +63,6 @@ One ring of 12 reaches 14.60. A single lightness leaves CIEDE2000 nothing to wor
 but hue, so two rings beat one by 72%.
 
 `4+8` reaches 21.80 and `3+9` reaches 19.45. Past `5+7` the split gets too uneven to pay.
-
-`5+7:C` matches `5+7` to 0.03 and adds nothing the `6+6` pair does not already show.
 
 ## Why the two rings land on the same hues
 
@@ -99,9 +106,9 @@ src/palette_lab/
   polish.py      SLSQP on the epigraph form
   palette.py     the Palette record, and the JSON
   plot.py        the figure
-  experiment.py  the pipeline the three scripts share
+  experiment.py  the pipeline the experiment scripts share
 scripts/
-  experiment_*.py        one per experiment, eight lines each
+  experiment_*.py        one per experiment, a docstring and a Layout
   visualize_palette.py   render any one JSON
 ```
 

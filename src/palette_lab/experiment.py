@@ -1,7 +1,7 @@
 """The pipeline every experiment script runs: search, polish, verify, save.
 
-Each script under `scripts/` is a declaration of one layout. This holds the logic, so
-adding an experiment costs eight lines and no duplication.
+Each script under `scripts/` is a declaration of one layout. This holds the logic, so a
+new experiment costs a docstring and a Layout, with nothing duplicated.
 """
 
 import argparse
