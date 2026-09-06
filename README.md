@@ -11,135 +11,19 @@ from, so the four rows compare at a glance.
 
 ### Two rings of six — 6+6
 
-<table>
-<tr>
-<td bgcolor="#ab515f" width="64" height="64">&nbsp;</td>
-<td bgcolor="#ff9faa" width="64" height="64">&nbsp;</td>
-<td bgcolor="#a55d1d" width="64" height="64">&nbsp;</td>
-<td bgcolor="#f4ad6f" width="64" height="64">&nbsp;</td>
-<td bgcolor="#787600" width="64" height="64">&nbsp;</td>
-<td bgcolor="#bfc66c" width="64" height="64">&nbsp;</td>
-<td bgcolor="#00875d" width="64" height="64">&nbsp;</td>
-<td bgcolor="#5ed7bd" width="64" height="64">&nbsp;</td>
-<td bgcolor="#68ccfb" width="64" height="64">&nbsp;</td>
-<td bgcolor="#007bae" width="64" height="64">&nbsp;</td>
-<td bgcolor="#7a61ae" width="64" height="64">&nbsp;</td>
-<td bgcolor="#c7aeff" width="64" height="64">&nbsp;</td>
-</tr>
-<tr>
-<td align="center"><sub><code>#ab515f</code></sub></td>
-<td align="center"><sub><code>#ff9faa</code></sub></td>
-<td align="center"><sub><code>#a55d1d</code></sub></td>
-<td align="center"><sub><code>#f4ad6f</code></sub></td>
-<td align="center"><sub><code>#787600</code></sub></td>
-<td align="center"><sub><code>#bfc66c</code></sub></td>
-<td align="center"><sub><code>#00875d</code></sub></td>
-<td align="center"><sub><code>#5ed7bd</code></sub></td>
-<td align="center"><sub><code>#68ccfb</code></sub></td>
-<td align="center"><sub><code>#007bae</code></sub></td>
-<td align="center"><sub><code>#7a61ae</code></sub></td>
-<td align="center"><sub><code>#c7aeff</code></sub></td>
-</tr>
-</table>
+![6+6](images/6+6.png)
 
 ### Two rings of six, one shared chroma — 6+6:C (best)
 
-<table>
-<tr>
-<td bgcolor="#ff9ca9" width="64" height="64">&nbsp;</td>
-<td bgcolor="#ab505e" width="64" height="64">&nbsp;</td>
-<td bgcolor="#a45c1d" width="64" height="64">&nbsp;</td>
-<td bgcolor="#f5aa6b" width="64" height="64">&nbsp;</td>
-<td bgcolor="#777600" width="64" height="64">&nbsp;</td>
-<td bgcolor="#bdc567" width="64" height="64">&nbsp;</td>
-<td bgcolor="#00865c" width="64" height="64">&nbsp;</td>
-<td bgcolor="#56d6bc" width="64" height="64">&nbsp;</td>
-<td bgcolor="#61cbfb" width="64" height="64">&nbsp;</td>
-<td bgcolor="#007aad" width="64" height="64">&nbsp;</td>
-<td bgcolor="#7a60ad" width="64" height="64">&nbsp;</td>
-<td bgcolor="#c7acff" width="64" height="64">&nbsp;</td>
-</tr>
-<tr>
-<td align="center"><sub><code>#ff9ca9</code></sub></td>
-<td align="center"><sub><code>#ab505e</code></sub></td>
-<td align="center"><sub><code>#a45c1d</code></sub></td>
-<td align="center"><sub><code>#f5aa6b</code></sub></td>
-<td align="center"><sub><code>#777600</code></sub></td>
-<td align="center"><sub><code>#bdc567</code></sub></td>
-<td align="center"><sub><code>#00865c</code></sub></td>
-<td align="center"><sub><code>#56d6bc</code></sub></td>
-<td align="center"><sub><code>#61cbfb</code></sub></td>
-<td align="center"><sub><code>#007aad</code></sub></td>
-<td align="center"><sub><code>#7a60ad</code></sub></td>
-<td align="center"><sub><code>#c7acff</code></sub></td>
-</tr>
-</table>
+![6+6:C](images/6+6-sharedC.png)
 
 ### Rings of five and seven — 5+7
 
-<table>
-<tr>
-<td bgcolor="#914c40" width="64" height="64">&nbsp;</td>
-<td bgcolor="#f47d61" width="64" height="64">&nbsp;</td>
-<td bgcolor="#dd9300" width="64" height="64">&nbsp;</td>
-<td bgcolor="#77600e" width="64" height="64">&nbsp;</td>
-<td bgcolor="#a0af26" width="64" height="64">&nbsp;</td>
-<td bgcolor="#00c18a" width="64" height="64">&nbsp;</td>
-<td bgcolor="#187354" width="64" height="64">&nbsp;</td>
-<td bgcolor="#00b1f5" width="64" height="64">&nbsp;</td>
-<td bgcolor="#2a6795" width="64" height="64">&nbsp;</td>
-<td bgcolor="#9c94ff" width="64" height="64">&nbsp;</td>
-<td bgcolor="#775188" width="64" height="64">&nbsp;</td>
-<td bgcolor="#ea78b1" width="64" height="64">&nbsp;</td>
-</tr>
-<tr>
-<td align="center"><sub><code>#914c40</code></sub></td>
-<td align="center"><sub><code>#f47d61</code></sub></td>
-<td align="center"><sub><code>#dd9300</code></sub></td>
-<td align="center"><sub><code>#77600e</code></sub></td>
-<td align="center"><sub><code>#a0af26</code></sub></td>
-<td align="center"><sub><code>#00c18a</code></sub></td>
-<td align="center"><sub><code>#187354</code></sub></td>
-<td align="center"><sub><code>#00b1f5</code></sub></td>
-<td align="center"><sub><code>#2a6795</code></sub></td>
-<td align="center"><sub><code>#9c94ff</code></sub></td>
-<td align="center"><sub><code>#775188</code></sub></td>
-<td align="center"><sub><code>#ea78b1</code></sub></td>
-</tr>
-</table>
+![5+7](images/5+7.png)
 
 ### Rings of five and seven, one shared chroma — 5+7:C
 
-<table>
-<tr>
-<td bgcolor="#a73f52" width="64" height="64">&nbsp;</td>
-<td bgcolor="#f48870" width="64" height="64">&nbsp;</td>
-<td bgcolor="#a34a00" width="64" height="64">&nbsp;</td>
-<td bgcolor="#da9d33" width="64" height="64">&nbsp;</td>
-<td bgcolor="#9cb74d" width="64" height="64">&nbsp;</td>
-<td bgcolor="#2d7b2c" width="64" height="64">&nbsp;</td>
-<td bgcolor="#00c6a8" width="64" height="64">&nbsp;</td>
-<td bgcolor="#00bce8" width="64" height="64">&nbsp;</td>
-<td bgcolor="#006bb1" width="64" height="64">&nbsp;</td>
-<td bgcolor="#98a0ff" width="64" height="64">&nbsp;</td>
-<td bgcolor="#7b4fa6" width="64" height="64">&nbsp;</td>
-<td bgcolor="#e685bf" width="64" height="64">&nbsp;</td>
-</tr>
-<tr>
-<td align="center"><sub><code>#a73f52</code></sub></td>
-<td align="center"><sub><code>#f48870</code></sub></td>
-<td align="center"><sub><code>#a34a00</code></sub></td>
-<td align="center"><sub><code>#da9d33</code></sub></td>
-<td align="center"><sub><code>#9cb74d</code></sub></td>
-<td align="center"><sub><code>#2d7b2c</code></sub></td>
-<td align="center"><sub><code>#00c6a8</code></sub></td>
-<td align="center"><sub><code>#00bce8</code></sub></td>
-<td align="center"><sub><code>#006bb1</code></sub></td>
-<td align="center"><sub><code>#98a0ff</code></sub></td>
-<td align="center"><sub><code>#7b4fa6</code></sub></td>
-<td align="center"><sub><code>#e685bf</code></sub></td>
-</tr>
-</table>
+![5+7:C](images/5+7-sharedC.png)
 
 ## Why these work
 

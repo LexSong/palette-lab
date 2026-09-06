@@ -26,6 +26,8 @@ for e in scripts/experiment_*.py; do uv run "$e" --plot; done   # all four, ~43 
 
 uv run scripts/visualize_palette.py results/6+6.json            # re-render one
 uv run scripts/visualize_palette.py results/6+6-sharedC.json --dark
+
+uv run scripts/render_readme_swatches.py     # regenerate images/*.png for README.md
 ```
 
 ## Results
