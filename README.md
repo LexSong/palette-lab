@@ -6,6 +6,11 @@ Twelve categories on one chart, and every one of them tells itself apart.
 
 ![6+6](images/6+6.png)
 
+```
+#ff9ca9  #ab505e  #a45c1d  #f5aa6b  #777600  #bdc567
+#00865c  #56d6bc  #61cbfb  #007aad  #7a60ad  #c7acff
+```
+
 The safe pick. Six light, six dark, and no two of them ever get mistaken for
 each other. Drop it into a twelve-series chart and stop thinking about the
 legend.
@@ -13,6 +18,11 @@ legend.
 ## 5+7 — The More Vivid of the Two
 
 ![5+7](images/5+7.png)
+
+```
+#a73f52  #f48870  #a34a00  #da9d33  #9cb74d  #2d7b2c
+#00c6a8  #00bce8  #006bb1  #98a0ff  #7b4fa6  #e685bf
+```
 
 Same twelve slots, more color. An uneven split buys extra saturation, so the
 chart comes out lively and still reads clean. Take this one when the deck has
@@ -45,12 +55,17 @@ wheel. And all of them sit inside sRGB — no wide-gamut monitor needed, nothing
 that dulls out on someone else's screen.
 
 Between the two: 6+6 is the most separated palette here, and 5+7 gives up a
-sliver of that for noticeably more saturation. Either is safe. The swatches
-above run in hue order so you can compare them row against row.
+sliver of that for noticeably more saturation. Either is safe. Both are listed
+in hue order, swatch and code alike, so you can compare them row against row.
 
 ### Variation: 5+7 Without the Shared Chroma
 
 ![5+7, one chroma per ring](images/5+7-alt.png)
+
+```
+#914c40  #f47d61  #dd9300  #77600e  #a0af26  #00c18a
+#187354  #00b1f5  #2a6795  #9c94ff  #775188  #ea78b1
+```
 
 Let the light and dark halves pick their own saturation and one half turns
 muted next to the other. It separates a hair better than the 5+7 above, and it
@@ -59,7 +74,7 @@ against vivid — on purpose.
 
 ## More Detail
 
-Grab the hex codes off the swatches and you're done. If you want more, every
+Copy the twelve hex codes and you're done. If you want more, every
 palette ships its full data — hue and chroma per color, which ring it sits on,
 the CIEDE2000 matrix — in `results/*.json`, loaded by
 `palette_lab.palette.load`:
