@@ -88,3 +88,8 @@ layouts that were tried and dropped — including a plain `6+6` where each ring
 keeps its own chroma — and how to regenerate all of it from scratch. It also
 answers the strangest result of the search: the two rings land on nearly the
 same hues, within 4°, which looks like a bug and is not.
+
+## License
+
+MIT, in [LICENSE](LICENSE) — that covers the code. The colors themselves are
+twelve numbers, so take them and go.
