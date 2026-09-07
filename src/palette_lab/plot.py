@@ -164,6 +164,15 @@ def draw_wheel(axes, palette, theme):
             zorder=9,
         )
 
+    groups = palette.layout.groups
+
+    def shared_with(ring):
+        """Which other rings draw this ring's chroma from the same slot."""
+        others = [other for other in range(len(groups)) if other != ring and groups[other] == groups[ring]]
+        if not others:
+            return ""
+        return f" (shared with {', '.join(str(other) for other in others)})"
+
     handles = [
         Line2D(
             [],
@@ -173,7 +182,7 @@ def draw_wheel(axes, palette, theme):
             markersize=9,
             markerfacecolor=theme["muted"],
             markeredgecolor=theme["surface"],
-            label=f"ring {ring}: {size} colors, L={lightness:.3f}, C={chroma:.3f}",
+            label=f"ring {ring}: {size} colors, L={lightness:.3f}, C={chroma:.3f}{shared_with(ring)}",
         )
         for ring, (size, (lightness, chroma)) in enumerate(zip(palette.layout.sizes, rings, strict=True))
     ]
@@ -312,9 +321,12 @@ def build_figure(palette, theme=None):
     draw_swatches(figure.add_subplot(grid[1, :]), palette, theme)
 
     n_rings = palette.layout.n_rings
+    n_chroma = palette.layout.n_chroma
     shared = ""
-    if palette.layout.shared_chroma:
+    if n_chroma == 1:
         shared = ", sharing one chroma"
+    elif n_chroma < n_rings:
+        shared = f", in {n_chroma} chroma groups"
     figure.suptitle(
         f"12 colors on {n_rings} Oklab {'ring' if n_rings == 1 else 'rings'}{shared}"
         f"  —  worst pair {palette.min_delta_e:.2f} ΔE00"

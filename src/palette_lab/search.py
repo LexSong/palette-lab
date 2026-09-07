@@ -37,21 +37,63 @@ SHARED_CHROMA_SUFFIX = ":C"
 
 @dataclass(frozen=True)
 class Layout:
-    """How the 12 colors split across rings, and whether the rings share one chroma.
+    """How the 12 colors split across rings, which rings share a chroma, and how dark they may go.
 
     With `shared_chroma`, all rings take a single C, capped by the worst hue anywhere in
     the palette rather than the worst hue on each ring. That is a real constraint, not a
     relabelling: a ring that could have carried more chroma gives it up.
+
+    `chroma_groups` is the general form, one slot index per ring, so rings can share a
+    chroma in groups instead of all or nothing. `(0, 1, 1)` gives ring 0 its own chroma and
+    welds rings 1 and 2 to a second. Leave it empty and `shared_chroma` decides, which is
+    what every layout before it did.
+
+    `lightness_floor` raises the bottom of the lightness range for this layout alone. It is
+    a guard rather than a target: it is usually inactive at the optimum, and it is there to
+    keep the search out of a basin whose colors are too dark to ship.
     """
 
     sizes: tuple[int, ...]
     shared_chroma: bool = False
+    chroma_groups: tuple[int, ...] = ()
+    lightness_floor: float | None = None
 
     def __post_init__(self):
         if sum(self.sizes) != N_COLORS:
             raise ValueError(f"ring sizes {self.sizes} must sum to {N_COLORS}")
         if any(size < 1 for size in self.sizes):
             raise ValueError(f"ring sizes {self.sizes} must all be positive")
+        if self.chroma_groups:
+            if len(self.chroma_groups) != self.n_rings:
+                raise ValueError(f"chroma_groups {self.chroma_groups} needs one slot per ring, {self.n_rings} of them")
+            if sorted(set(self.chroma_groups)) != list(range(len(set(self.chroma_groups)))):
+                raise ValueError(f"chroma_groups {self.chroma_groups} must number its slots from 0 with no gaps")
+            if self.shared_chroma and len(set(self.chroma_groups)) != 1:
+                raise ValueError(f"chroma_groups {self.chroma_groups} contradicts shared_chroma")
+        if self.lightness_floor is not None and not LIGHTNESS_RANGE[0] <= self.lightness_floor < LIGHTNESS_RANGE[1]:
+            raise ValueError(f"lightness_floor {self.lightness_floor} must sit inside {LIGHTNESS_RANGE}")
+        # Store the slots explicitly, so a layout that spelled them out and one that left
+        # `shared_chroma` to imply them compare equal and survive a JSON round trip.
+        object.__setattr__(self, "chroma_groups", self._implied_groups())
+
+    def _implied_groups(self):
+        if self.chroma_groups:
+            return tuple(self.chroma_groups)
+        if self.shared_chroma:
+            return (0,) * self.n_rings
+        return tuple(range(self.n_rings))
+
+    @property
+    def groups(self):
+        """The chroma slot each ring draws from. `shared_chroma` is the all-in-one-slot case."""
+        return self.chroma_groups
+
+    @property
+    def lightness_range(self):
+        """The (low, high) lightness the search may use, after any floor this layout sets."""
+        if self.lightness_floor is None:
+            return LIGHTNESS_RANGE
+        return (self.lightness_floor, LIGHTNESS_RANGE[1])
 
     @property
     def name(self):
@@ -73,10 +115,8 @@ class Layout:
 
     @property
     def n_chroma(self):
-        """How many free chroma values the layout has: one shared, or one per ring."""
-        if self.shared_chroma:
-            return 1
-        return self.n_rings
+        """How many free chroma values the layout has: one shared, one per ring, or one per group."""
+        return len(set(self.groups))
 
     @property
     def n_params(self):
@@ -91,9 +131,7 @@ class Layout:
     @property
     def chroma_of_color(self):
         """(12,) array giving each color's chroma slot. All zero when the rings share one."""
-        if self.shared_chroma:
-            return np.zeros(N_COLORS, dtype=int)
-        return self.ring_of_color
+        return np.array(self.groups)[self.ring_of_color]
 
 
 def _softmax(logits):
@@ -118,7 +156,8 @@ def decode(unit_params, layout):
     n_rings = layout.n_rings
     n_chroma = layout.n_chroma
 
-    lightness = LIGHTNESS_RANGE[0] + unit_params[:, :n_rings] * (LIGHTNESS_RANGE[1] - LIGHTNESS_RANGE[0])
+    low, high = layout.lightness_range
+    lightness = low + unit_params[:, :n_rings] * (high - low)
     rho = RHO_RANGE[0] + unit_params[:, n_rings : n_rings + n_chroma] * (RHO_RANGE[1] - RHO_RANGE[0])
     phase = unit_params[:, n_rings + n_chroma : 2 * n_rings + n_chroma] * 360.0
 
@@ -170,15 +209,16 @@ def equal_spacing_baseline(layout, n_lightness=97):
     other beats it, by 3.8% on 6+6. The search has to clear this floor or it did not earn
     its runtime, and it clears it by about 28%. Returns the value and its parameters.
     """
-    grid = np.linspace(LIGHTNESS_RANGE[0], LIGHTNESS_RANGE[1], n_lightness)
+    low, high = layout.lightness_range
+    grid = np.linspace(low, high, n_lightness)
     n_rings = layout.n_rings
-    span = LIGHTNESS_RANGE[1] - LIGHTNESS_RANGE[0]
+    span = high - low
 
     candidates = []
     for lightnesses in itertools.combinations_with_replacement(grid, n_rings):
         params = np.zeros(layout.n_params)
         for ring, value in enumerate(lightnesses):
-            params[ring] = (value - LIGHTNESS_RANGE[0]) / span
+            params[ring] = (value - low) / span
         # Chroma pushed to the gamut limit, and equal gaps, which are equal logits. 0.5
         # maps to logit 0. Every phase stays 0, so the rings sit aligned.
         params[n_rings : n_rings + layout.n_chroma] = 1.0

@@ -19,7 +19,10 @@ from palette_lab import color
 from palette_lab.search import N_COLORS
 from palette_lab.search import Layout
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
+# Version 3 predates chroma groups and the lightness floor. Its files are still valid,
+# so we read them and derive the groups from `shared_chroma`, which is what they store.
+READABLE_SCHEMAS = (3, 4)
 
 # How close to the minimum a pair has to sit to count as binding. CIEDE2000 values run
 # 15-70 here, so 0.05 is tight enough that only genuinely pinned pairs qualify.
@@ -165,6 +168,8 @@ def to_document(palette):
             "layout": palette.layout.name,
             "sizes": list(palette.layout.sizes),
             "shared_chroma": palette.layout.shared_chroma,
+            "chroma_groups": list(palette.layout.groups),
+            "lightness_floor": palette.layout.lightness_floor,
             **palette.config,
         },
         "result": {
@@ -184,10 +189,16 @@ def to_document(palette):
 
 
 def from_document(document):
-    if document.get("schema") != SCHEMA_VERSION:
-        raise ValueError(f"schema {document.get('schema')}, expected {SCHEMA_VERSION}")
+    if document.get("schema") not in READABLE_SCHEMAS:
+        raise ValueError(f"schema {document.get('schema')}, expected one of {READABLE_SCHEMAS}")
     experiment = dict(document["experiment"])
-    layout = Layout(tuple(experiment.pop("sizes")), experiment.pop("shared_chroma"))
+    # Popped rather than read, so nothing describing the layout leaks into `config`.
+    layout = Layout(
+        tuple(experiment.pop("sizes")),
+        experiment.pop("shared_chroma"),
+        tuple(experiment.pop("chroma_groups", ()) or ()),
+        experiment.pop("lightness_floor", None),
+    )
     experiment.pop("layout", None)
     oklch = np.array([entry["oklch"] for entry in document["colors"]], dtype=float)
     return Palette(layout=layout, oklch=oklch, config=experiment, generated=document["generated"])

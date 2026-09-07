@@ -33,8 +33,11 @@ def test_pack_and_unpack_round_trip(layout):
     chroma = rng.uniform(0.02, 0.2, layout.n_rings)
     hues = rng.uniform(0, 360, search.N_COLORS)
 
-    if layout.shared_chroma:
-        chroma[:] = chroma[0]
+    # Rings sharing a chroma slot must start out equal, because pack keeps one value
+    # per slot and unpack spreads it back over every ring in that slot.
+    for slot in range(layout.n_chroma):
+        members = [ring for ring in range(layout.n_rings) if layout.groups[ring] == slot]
+        chroma[members] = chroma[members[0]]
 
     variables = polish_module.pack(lightness, chroma, hues, 23.5, layout)
     assert len(variables) == 1 + layout.n_rings + layout.n_chroma + search.N_COLORS
@@ -68,8 +71,11 @@ def test_polished_palette_is_a_valid_ringed_palette(layout):
         assert np.ptp(oklch[members, 1]) < 1e-9
         assert np.all(np.diff(oklch[members, 2]) > 0.0)
 
-    if layout.shared_chroma:
-        assert np.ptp(oklch[:, 1]) < 1e-9
+    chroma_of_color = layout.chroma_of_color
+    for slot in range(layout.n_chroma):
+        assert np.ptp(oklch[chroma_of_color == slot, 1]) < 1e-9
+
+    assert oklch[:, 0].min() >= layout.lightness_range[0] - 1e-9
 
 
 def test_clamp_pulls_an_out_of_gamut_ring_back_in():

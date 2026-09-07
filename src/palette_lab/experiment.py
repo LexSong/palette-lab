@@ -50,10 +50,18 @@ def verify(oklch, layout, baseline):
             if spread > 1e-9:
                 raise AssertionError(f"{layout.name}: ring {ring} {name} varies by {spread:.3e}, so it is not a ring")
 
-    if layout.shared_chroma:
-        spread = np.ptp(oklch[:, 1])
+    chroma_of_color = layout.chroma_of_color
+    for slot in range(layout.n_chroma):
+        spread = np.ptp(oklch[chroma_of_color == slot, 1])
         if spread > 1e-9:
-            raise AssertionError(f"{layout.name}: chroma varies by {spread:.3e} but the rings are meant to share it")
+            raise AssertionError(
+                f"{layout.name}: chroma varies by {spread:.3e} across slot {slot} but its rings are meant to share it"
+            )
+
+    floor = layout.lightness_range[0]
+    darkest = float(oklch[:, 0].min())
+    if darkest < floor - 1e-9:
+        raise AssertionError(f"{layout.name}: lightness {darkest:.4f} is under the layout floor {floor}")
 
     minimum = float(color.pairwise_delta_e(color.linear_srgb_to_lab(linear)).min())
     if minimum < baseline - 1e-9:

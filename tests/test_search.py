@@ -31,6 +31,41 @@ def test_layout_rejects_sizes_that_are_not_a_palette(sizes):
         Layout(sizes)
 
 
+@pytest.mark.parametrize("groups", [(0, 1), (0, 1, 2, 3), (0, 2, 2), (1, 1, 1)])
+def test_layout_rejects_chroma_groups_that_are_not_slots(groups):
+    # One slot per ring, numbered from 0 with no gaps.
+    with pytest.raises(ValueError):
+        Layout((5, 5, 2), chroma_groups=groups)
+
+
+def test_layout_rejects_chroma_groups_that_contradict_shared_chroma():
+    with pytest.raises(ValueError):
+        Layout((5, 5, 2), shared_chroma=True, chroma_groups=(0, 1, 1))
+
+
+def test_chroma_groups_are_stored_however_they_were_spelled():
+    """A layout that spells its slots out equals one that leaves them implied."""
+    assert Layout((6, 6)).groups == (0, 1)
+    assert Layout((6, 6), shared_chroma=True).groups == (0, 0)
+    assert Layout((6, 6)) == Layout((6, 6), chroma_groups=(0, 1))
+    assert len({Layout((6, 6)), Layout((6, 6), chroma_groups=(0, 1))}) == 1
+
+
+@pytest.mark.parametrize("floor", [-0.01, 0.99, 1.5])
+def test_layout_rejects_a_lightness_floor_outside_the_range(floor):
+    with pytest.raises(ValueError):
+        Layout((6, 6), lightness_floor=floor)
+
+
+def test_a_lightness_floor_raises_the_bottom_of_the_decoded_range():
+    floor = 0.45
+    layout = Layout((6, 6), lightness_floor=floor)
+    assert layout.lightness_range == (floor, search.LIGHTNESS_RANGE[1])
+    oklch, lightness, _ = search.decode(random_params(layout, 64, seed=3), layout)
+    assert lightness.min() >= floor
+    assert oklch[:, :, 0].min() >= floor
+
+
 @pytest.mark.parametrize("layout", ALL_LAYOUTS, ids=lambda layout: layout.name)
 def test_parameter_count_matches_the_free_variables(layout):
     # A lightness and a phase per ring, a rho per chroma slot, and one gap logit per color
@@ -44,6 +79,11 @@ def test_parameter_counts_are_what_we_think_they_are():
     assert Layout((5, 7)).n_params == 16
     # Sharing one chroma removes exactly one variable.
     assert Layout((6, 6), shared_chroma=True).n_params == 15
+    # Three rings, and two of them share a chroma, so two chroma variables not three.
+    assert Layout((5, 5, 2), chroma_groups=(0, 1, 1)).n_params == 17
+    assert Layout((5, 5, 2)).n_params == 18
+    # A floor bounds a variable rather than adding one.
+    assert Layout((5, 5, 2), chroma_groups=(0, 1, 1), lightness_floor=0.45).n_params == 17
 
 
 @pytest.mark.parametrize("layout", ALL_LAYOUTS, ids=lambda layout: layout.name)

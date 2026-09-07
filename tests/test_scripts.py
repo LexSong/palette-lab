@@ -33,6 +33,7 @@ visualize = load_script("visualize_palette")
 
 def test_every_experiment_has_a_script():
     assert EXPERIMENT_SCRIPTS == [
+        "experiment_5plus5plus2",
         "experiment_5plus7",
         "experiment_5plus7_shared_chroma",
         "experiment_6plus6",

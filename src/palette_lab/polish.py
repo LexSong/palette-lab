@@ -55,12 +55,13 @@ MINIMUM_TOLERANCE = 1e-9
 def pack(lightness, chroma, hues, t, layout):
     """Ring lightness, ring chroma, 12 hues and t -> the scaled SLSQP variable vector.
 
-    A shared-chroma layout has one chroma variable, so the per-ring values collapse to
-    their first entry. They are equal by construction, and `polish` re-derives the rest.
+    There is one chroma variable per slot, not per ring, so rings sharing a slot collapse
+    to the first ring that uses it. They are equal by construction, and `unpack` spreads
+    them back over the rings through `chroma_of_color`.
     """
     chroma = np.asarray(chroma, dtype=float)
-    if layout.shared_chroma:
-        chroma = chroma[:1]
+    groups = layout.groups
+    chroma = np.array([chroma[groups.index(slot)] for slot in range(layout.n_chroma)])
     return np.concatenate(
         [
             [t / DELTA_E_SCALE],
@@ -176,9 +177,12 @@ def polish(unit_params, layout, max_iterations=300):
             "jac": lambda z: _jacobian(constraint_values, z),
         }
     ]
+    # Refinement runs after the search, and nothing re-checks the layout's floor
+    # afterwards, so the bounds have to carry it here too.
+    lightness_bounds = (max(LIGHTNESS_BOUNDS[0], layout.lightness_range[0]), LIGHTNESS_BOUNDS[1])
     bounds = (
         [(0.0, 1.0)]
-        + [LIGHTNESS_BOUNDS] * layout.n_rings
+        + [lightness_bounds] * layout.n_rings
         + [(0.0, color.CHROMA_CEILING * CHROMA_SCALE)] * layout.n_chroma
         + [(None, None)] * N_COLORS
     )

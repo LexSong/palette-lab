@@ -1,6 +1,6 @@
 {
-  "schema": 3,
-  "generated": "2026-09-07T15:42:20+08:00",
+  "schema": 4,
+  "generated": "2026-09-07T16:13:01+08:00",
   "experiment": {
     "layout": "6+6",
     "sizes": [
@@ -8,6 +8,11 @@
       6
     ],
     "shared_chroma": false,
+    "chroma_groups": [
+      0,
+      1
+    ],
+    "lightness_floor": null,
     "gamut": "sRGB",
     "objective": "maximin_ciede2000",
     "restarts": 12,

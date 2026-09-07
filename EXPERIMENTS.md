@@ -5,8 +5,13 @@ Methodology, search results, and design notes behind the palettes shown in
 
 A **ring** is a set of colors sharing one Oklab lightness `L` and one chroma `C`,
 differing only in hue. That constraint is what makes the palette look deliberate. A
-**layout** says how the 12 colors split across rings, written `6+6`, and whether the
-rings share one chroma, written `6+6:C`.
+**layout** says how the 12 colors split across rings, written `6+6`, and which rings
+share a chroma. Every ring sharing one is written `6+6:C`. Rings sharing in groups are
+written as the slot each ring draws from, so `5+5+2` with `(0, 1, 1)` gives ring 0 its
+own chroma and welds rings 1 and 2 to a second.
+
+A layout may also set a **lightness floor**, which raises the bottom of the range the
+search may use. `5+5+2` sets 0.45.
 
 "Hard to confuse" means CIEDE2000. The search maximizes the *smallest* distance over all
 66 pairs, so the palette's worst confusion is as mild as it can be. Every color stays
@@ -17,12 +22,13 @@ inside sRGB.
 One script per experiment. Each writes its own JSON, and `--plot` adds the figure.
 
 ```sh
+uv run scripts/experiment_5plus5plus2.py --plot             # ~27 s -> results/5+5+2.json
 uv run scripts/experiment_6plus6.py --plot                  # ~12 s -> results/6+6.json
 uv run scripts/experiment_5plus7.py --plot
 uv run scripts/experiment_6plus6_shared_chroma.py --plot
 uv run scripts/experiment_5plus7_shared_chroma.py --plot
 
-for e in scripts/experiment_*.py; do uv run "$e" --plot; done   # all four, ~50 s
+for e in scripts/experiment_*.py; do uv run "$e" --plot; done   # all five, ~77 s
 
 uv run scripts/visualize_palette.py results/6+6.json            # re-render one
 uv run scripts/visualize_palette.py results/6+6-sharedC.json --dark
@@ -34,14 +40,22 @@ uv run scripts/render_readme_swatches.py     # regenerate images/*.png for READM
 
 | experiment | min ΔE00 | after 8-bit | rings |
 |---|---|---|---|
-| **6+6** | **25.12** | 24.76 | L=0.550 C=0.119, L=0.802 C=0.115 |
-| **6+6:C** | 25.07 | **24.88** | L=0.548, L=0.797, both C=0.119 |
+| **5+5+2** | **28.17** | **28.06** | L=0.488 C=0.100, L=0.741 C=0.156, L=0.903 C=0.156 |
+| 6+6 | 25.12 | 24.76 | L=0.550 C=0.119, L=0.802 C=0.115 |
+| 6+6:C | 25.07 | 24.88 | L=0.548, L=0.797, both C=0.119 |
 | 5+7 | 24.85 | 24.76 | L=0.497 C=0.096, L=0.719 C=0.153 |
 | 5+7:C | 24.82 | 24.67 | L=0.515, L=0.738, both C=0.137 |
 
-Pick `6+6` for the highest exact separation, `6+6:C` for the simpler palette that ships
-better. Sharing one chroma costs 0.20% there, and it survives 8-bit quantization
-*better*, 24.88 against 24.76.
+`5+5+2` wins by 12.1% over `6+6`, and its third lightness is where that comes from.
+Among the two-lightness layouts, pick `6+6` for the highest exact separation and
+`6+6:C` for the simpler palette that ships better. Sharing one chroma costs 0.20%
+there, and it survives 8-bit quantization *better*, 24.88 against 24.76.
+
+`5+5+2`:
+
+`#904839` `#705f00` `#007153` `#00688f` `#724e8a`
+`#f58d3d` `#6dc364` `#16b8ff` `#b993ff` `#fc7d92`
+`#ffde54` `#00fff7`
 
 **Sharing costs less on the uneven split, which is the opposite of what it looks like.**
 Left free, `5+7` gives its rings 0.096 and 0.153, so one shared value has to move both a
@@ -59,6 +73,42 @@ ordering flips back: `5+7:C` loses 0.08 to `5+7`, where `6+6:C` gains 0.12 over 
 
 `#ab505e` `#a45c1d` `#777600` `#00865c` `#007aad` `#7a60ad`
 `#ff9ca9` `#f5aa6b` `#bac669` `#56d6bc` `#61cbfb` `#c7acff`
+
+## Why 5+5+2 groups its chroma, and why it needs a floor
+
+Give the optimizer a freedom and it spends part of it going gray, because a low chroma at
+an extreme lightness sits far from everything else and costs the objective nothing. The
+smallest chroma in the palette tracks how much freedom it was given:
+
+| layout | constraints | min ΔE00 | smallest C in the palette |
+|---|---|---|---|
+| 6+6:C | one chroma for all twelve | 25.07 | 0.119 |
+| 5+5+2, free chroma | none | 29.35 | 0.068 |
+| 5+5+2, free chroma | L >= 0.40 | 28.14 | 0.041 |
+| 12 free colors | L >= 0.40 | 34.60 | 0.008 |
+
+The last row is a palette with `#fff9fc` in it, a white with a rumour of pink, and
+`#404d34`, a dark olive-gray pressed against the floor. Both score well and neither is a
+chart color. `6+6:C`'s real protection was never the ring: one shared chroma forced all
+twelve to stay colorful.
+
+**A lightness floor alone relocates the escape rather than closing it.** Free, `5+5+2`
+sends its two-color ring to L=0.206. Floored at 0.40 it sends the same ring to L=0.925 and
+C=0.041, pale instead of dark, for the same reason.
+
+**Grouping the chroma closes it.** Welding the two-color ring to the five vivid colors
+means going pale would drag five colors with it, so there is no gray corner left to reach.
+That is why `5+5+2` needs no chroma floor: its smallest chroma lands at 0.100 on its own.
+
+The lightness floor stays, as a guard rather than a bound. It never binds — the rings
+settle at 0.488, 0.741 and 0.903, all clear of 0.45 — but removing it lets the search
+prefer a different basin that scores 28.49 with the two-color ring at L=0.280, on colors
+too dark to ship. The floor excludes that basin without touching the one we want.
+
+**Pinning the dark ring instead of flooring it does not work.** Fix ring 0 at L=0.5 and
+the palette scores 28.00, 0.6% below flooring. Fix it at 0.6 and a *free* ring takes over
+the dark job at L=0.338. Requiring every color above 0.6 costs the whole gain: 24.94,
+below `6+6`.
 
 ## What was tried and dropped
 

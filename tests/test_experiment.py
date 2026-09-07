@@ -52,6 +52,28 @@ def test_verify_rejects_two_chromas_when_the_layout_says_one():
     experiment.verify(oklch, Layout((6, 6)), baseline=0.0)
 
 
+def test_verify_rejects_two_chromas_inside_one_group():
+    """Rings 1 and 2 share a slot, so they may not disagree even though ring 0 may."""
+    layout = Layout((5, 5, 2), chroma_groups=(0, 1, 1))
+    oklch = a_ring()
+    oklch[:5, 1] = 0.04
+    with pytest.raises(AssertionError, match="slot 1"):
+        oklch[10:, 1] = 0.03
+        experiment.verify(oklch, layout, baseline=0.0)
+    # Ring 0 carrying its own chroma is the point of the grouping, so that stays legal.
+    oklch[10:, 1] = 0.02
+    experiment.verify(oklch, layout, baseline=0.0)
+
+
+def test_verify_rejects_a_palette_under_the_layout_floor():
+    layout = Layout((6, 6), lightness_floor=0.45)
+    oklch = a_ring(lightness=0.44)
+    with pytest.raises(AssertionError, match="floor"):
+        experiment.verify(oklch, layout, baseline=0.0)
+    # The same palette passes once the floor allows it.
+    experiment.verify(oklch, Layout((6, 6)), baseline=0.0)
+
+
 def test_verify_rejects_a_result_that_lost_to_the_baseline():
     with pytest.raises(AssertionError, match="baseline"):
         experiment.verify(a_ring(), Layout((6, 6)), baseline=99.0)

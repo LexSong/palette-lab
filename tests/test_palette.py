@@ -44,8 +44,10 @@ def test_rings_report_the_shared_lightness_and_chroma(palette):
         members = ring_of_color == ring
         assert palette.oklch[members, 0] == pytest.approx(lightness)
         assert palette.oklch[members, 1] == pytest.approx(chroma)
-    if palette.layout.shared_chroma:
-        assert len({round(chroma, 12) for _, chroma in palette.rings}) == 1
+    # Rings in one chroma slot report one chroma between them, however many they are.
+    for slot in range(palette.layout.n_chroma):
+        members = [ring for ring in range(palette.layout.n_rings) if palette.layout.groups[ring] == slot]
+        assert len({round(palette.rings[ring][1], 12) for ring in members}) == 1
 
 
 def test_binding_pairs_are_exactly_the_pairs_at_the_minimum(palette):
@@ -138,6 +140,23 @@ def test_load_rejects_a_foreign_schema(tmp_path):
     path.write_text(json.dumps({"schema": 1, "colors": []}), encoding="utf-8")
     with pytest.raises(ValueError, match="schema"):
         palette_module.load(path)
+
+
+def test_a_schema_3_file_still_loads(tmp_path, palette):
+    """Version 3 predates chroma groups, so its slots come from `shared_chroma`."""
+    document = palette_module.to_document(palette)
+    document["schema"] = 3
+    del document["experiment"]["chroma_groups"]
+    del document["experiment"]["lightness_floor"]
+    path = tmp_path / "v3.json"
+    path.write_text(json.dumps(document), encoding="utf-8")
+
+    restored = palette_module.load(path)
+    assert restored.layout.sizes == palette.layout.sizes
+    assert restored.layout.shared_chroma == palette.layout.shared_chroma
+    assert restored.config == palette.config
+    if not palette.layout.chroma_groups or palette.layout.groups == Layout(palette.layout.sizes).groups:
+        assert restored.layout.groups == palette.layout.groups
 
 
 def test_slug_is_a_usable_filename():
