@@ -34,7 +34,7 @@ uv run scripts/experiment_bright12.py --restarts 40 --evals 5000 --plot   # ~5 m
 for e in scripts/experiment_*.py; do uv run "$e" --plot; done   # all six
 
 uv run scripts/visualize_palette.py results/6+6.json            # re-render one
-uv run scripts/visualize_palette.py results/6+6-sharedC.json --dark
+uv run scripts/visualize_palette.py results/6+6-sharedC.json --white-bg
 
 uv run scripts/render_readme_swatches.py     # regenerate images/*.png for README.md
 ```

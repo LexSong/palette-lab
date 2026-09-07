@@ -75,7 +75,7 @@ THEMES = {
 SATURATED_CELL_FRACTION = 0.11
 
 
-def theme_for(dark=False):
+def theme_for(dark=True):
     if dark:
         return THEMES["dark"]
     return THEMES["light"]
@@ -378,7 +378,7 @@ def build_figure(palette, theme=None):
     return figure
 
 
-def save_figure(palette, path, dark=False, dpi=160):
+def save_figure(palette, path, dark=True, dpi=160):
     """Render and write a PNG. Returns the path."""
     theme = theme_for(dark)
     figure = build_figure(palette, theme)

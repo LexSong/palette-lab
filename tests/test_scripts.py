@@ -78,8 +78,8 @@ def test_visualizer_renders_a_saved_palette(palette, tmp_path):
     assert visualize.main([str(json_path), "--no-show", "--dpi", "60"]) == 0
     assert (tmp_path / f"{palette.layout.slug}.png").exists()
 
-    assert visualize.main([str(json_path), "--no-show", "--dark", "--dpi", "60"]) == 0
-    assert (tmp_path / f"{palette.layout.slug}-dark.png").exists()
+    assert visualize.main([str(json_path), "--no-show", "--white-bg", "--dpi", "60"]) == 0
+    assert (tmp_path / f"{palette.layout.slug}-white.png").exists()
 
 
 def test_visualizer_honours_an_explicit_save_path(palette, tmp_path):

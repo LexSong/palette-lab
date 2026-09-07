@@ -34,7 +34,7 @@ def parse_args(argv=None, description=None):
         "--out-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help=f"where the JSON goes (default: {DEFAULT_OUTPUT_DIR})"
     )
     parser.add_argument("--plot", action="store_true", help="also write a PNG beside the JSON")
-    parser.add_argument("--dark", action="store_true", help="render that PNG on a dark surface")
+    parser.add_argument("--white-bg", action="store_true", help="render that PNG on a white surface instead of dark")
     parser.add_argument("--quiet", action="store_true", help="only print the summary line")
     return parser.parse_args(argv)
 
@@ -144,9 +144,7 @@ def main(layout, argv=None, description=None):
     print(f"  wrote {json_path}")
 
     if args.plot:
-        suffix = ""
-        if args.dark:
-            suffix = "-dark"
-        png_path = plot.save_figure(palette, args.out_dir / f"{layout.slug}{suffix}.png", dark=args.dark)
+        suffix = "-white" if args.white_bg else ""
+        png_path = plot.save_figure(palette, args.out_dir / f"{layout.slug}{suffix}.png", dark=not args.white_bg)
         print(f"  wrote {png_path}")
     return 0
