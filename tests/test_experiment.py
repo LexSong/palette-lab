@@ -9,6 +9,7 @@ import pytest
 
 from palette_lab import experiment
 from palette_lab.search import Layout
+from tests.conftest import build_palette
 
 
 def a_ring(lightness=0.7, chroma=0.02, offset=0.0):
@@ -102,3 +103,17 @@ def test_main_writes_the_json_and_only_plots_when_asked(experiment_layout, tmp_p
 
     assert experiment.main(experiment_layout, [*argv, "--plot"]) == 0
     assert (tmp_path / f"{experiment_layout.slug}.png").exists()
+
+
+def test_verify_rejects_a_palette_over_the_layout_ceiling():
+    """A floor holds one end. Without this check nothing would hold the other."""
+    layout = Layout((1,) * 12, chroma_groups=(0,) * 12, lightness_floor=0.60, lightness_ceiling=0.85)
+    palette = build_palette(layout)
+    oklch = palette.oklch.copy()
+    # `verify` checks gamut and the shared chroma before it checks the ceiling, so both
+    # have to still hold or it reports one of those instead. Every color drops to a chroma
+    # that is inside sRGB at L=0.90, keeping all twelve on the one chroma the layout says.
+    oklch[:, 1] = 0.02
+    oklch[0, 0] = 0.90
+    with pytest.raises(AssertionError, match="over the layout ceiling"):
+        experiment.verify(oklch, layout, baseline=0.0)

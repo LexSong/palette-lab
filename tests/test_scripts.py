@@ -38,6 +38,7 @@ def test_every_experiment_has_a_script():
         "experiment_5plus7_shared_chroma",
         "experiment_6plus6",
         "experiment_6plus6_shared_chroma",
+        "experiment_bright12",
     ]
 
 

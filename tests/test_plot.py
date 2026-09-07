@@ -60,22 +60,38 @@ def test_the_ramp_spends_its_red_on_the_bottom_of_the_range(dark):
     assert midpoint.max() - midpoint.min() < 0.08
 
 
-def test_emptiest_direction_finds_the_gap():
-    # Hues clustered in the first half leave the second half open.
-    hues = np.linspace(0.0, 150.0, 6)
-    angle = plot.emptiest_direction(hues)
-    assert 150.0 < angle < 360.0
-    assert min(min(abs(angle - hue), 360.0 - abs(angle - hue)) for hue in hues) > 90.0
-
-
-def test_emptiest_direction_handles_an_even_spread():
-    angle = plot.emptiest_direction(np.linspace(0.0, 360.0, 12, endpoint=False))
-    assert 0.0 <= angle < 360.0
-
-
 def test_binding_pairs_are_what_the_figure_boxes(palette):
     """draw_delta_e boxes palette.binding_pairs, so this pins the set it will draw."""
     matrix = palette.delta_e_matrix
     for row, column in palette.binding_pairs:
         assert matrix[row, column] == pytest.approx(palette.min_delta_e, abs=0.05)
     assert len(palette.binding_pairs) < 66
+
+
+def test_the_panel_shows_lightness_and_marks_the_bands_a_layout_sets(palette):
+    """The wheel this replaced dropped lightness, which is the axis dimming attacks."""
+    figure = plot.build_figure(palette)
+    try:
+        panel = figure.axes[0]
+        assert panel.get_ylabel() == "Oklab lightness"
+        assert panel.get_xlabel() == "hue (degrees)"
+
+        bottom, top = panel.get_ylim()
+        assert bottom <= palette.oklch[:, 0].min()
+        assert top >= palette.oklch[:, 0].max()
+
+        # A floor or ceiling gets a dashed rule, so a palette pressed against one shows it.
+        dashed = [line.get_ydata()[0] for line in panel.get_lines() if line.get_linestyle() == "--"]
+        for value in (palette.layout.lightness_floor, palette.layout.lightness_ceiling):
+            if value is not None:
+                assert any(abs(value - drawn) < 1e-9 for drawn in dashed)
+    finally:
+        plt.close(figure)
+
+
+def test_every_panel_numbers_the_colors_the_same_way(palette):
+    """A number on a swatch has to name the same color on the matrix and on the panel."""
+    order = plot.hue_order(palette)
+    hues = palette.oklch[:, 2] % 360.0
+    assert list(hues[order]) == sorted(hues), "the display order is by hue"
+    assert sorted(int(index) for index in order) == list(range(12)), "and it is a permutation"

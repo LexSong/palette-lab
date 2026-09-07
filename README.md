@@ -7,13 +7,27 @@ Twelve categories on one chart, and every one of them tells itself apart.
 ![5+5+2](images/5+5+2.png)
 
 ```
-#904839  #f58d3d  #ffde54  #705f00  #6dc364  #007153
-#00fff7  #00688f  #16b8ff  #b993ff  #724e8a  #fc7d92
+#fc7d92  #904839  #f58d3d  #ffde54  #705f00  #6dc364
+#007153  #00fff7  #00688f  #16b8ff  #b993ff  #724e8a
 ```
 
 The clearest twelve here, by 12%. Five muted colors, five vivid ones, and two
 bright ones on top. Twelve lines on one chart, and not one of them needs a
 second look.
+
+## bright12 — For Dark Screens
+
+![bright12](images/bright12.png)
+
+```
+#c25a6f  #ff9676  #b66c00  #fdc35e  #828900  #bcdd76
+#009865  #4feacf  #41d1ff  #3584cd  #946dc5  #ff9fdb
+```
+
+Built for a dark background and a phone with the brightness turned down. Nothing
+here is dark enough to sink into the background, and every color carries exactly
+the same saturation. Turn the screen down until a normal chart gives up, and
+these twelve are still twelve.
 
 ## 6+6 — The Most Uniform
 
@@ -61,21 +75,31 @@ colors and the palette comes out about half as clear, because there is not
 room for twelve distinguishable hues. Add a brightness difference and the eye
 gets a second thing to sort by, so neighbors stop competing. `6+6` and `5+7`
 use two brightness levels. `5+5+2` uses three, which is most of why it wins.
+`bright12` gives every color its own.
 
-**They still look like a set.** `6+6` and `5+7` give every color the same
-saturation. `5+5+2` uses two — one for its five muted colors and one shared by
-the other seven — so it reads as two deliberate groups rather than twelve picks
-off a color wheel. All of them sit inside sRGB, so nothing needs a wide-gamut
-monitor and nothing dulls out on someone else's screen.
+**They still look like a set.** `6+6`, `5+7` and `bright12` give every color the
+same saturation. `5+5+2` uses two — one for its five muted colors and one shared
+by the other seven — so it reads as two deliberate groups rather than twelve
+picks off a color wheel. All of them sit inside sRGB, so nothing needs a
+wide-gamut monitor and nothing dulls out on someone else's screen.
 
-**Nothing is too dark to use.** No color goes below Oklab lightness 0.48, so
-none of them turn to mud on a dimmed phone or a cheap projector.
+**Nothing is too dark to use.** No color goes below Oklab lightness 0.48, and in
+`bright12` nothing goes below 0.60, so none of them turn to mud on a dimmed phone
+or a cheap projector.
+
+**bright12 is the one to reach for on a dark surface, and the wrong one on
+paper.** It is the only palette here with a ceiling as well as a floor: every
+color sits between Oklab lightness 0.60 and 0.85. That band is what a dimmed
+screen can still render. Turn a display down to a tenth of its output and
+`bright12` holds its worst pair at ΔE00 10.6, against 9.2 for `6+6` and 8.5 for
+`5+7`, because neither of those has a floor and their darkest colors crush toward
+black. The same band makes it the faintest of the four on white. That trade is
+the point of it, not a flaw in it.
 
 **Where 5+5+2 gives ground is a white background.** Its two bright colors,
 `#ffde54` and `#00fff7`, sit at 1.26:1 contrast there, so they hold up as filled
 areas and bars and go too faint for thin lines or small text. `6+6` is the safer
-pick on white, at 1.79:1 worst case. On a dark background `5+5+2` is the
-strongest of the three.
+pick on white, at 1.79:1 worst case.
 
 Every palette is listed in hue order, swatch and code alike, so you can compare
 them row against row.

@@ -126,3 +126,13 @@ def test_jacobian_matches_a_plain_finite_difference():
     ours = polish_module._jacobian(function, point)
     expected = np.array([[2 * 0.3, 0.0, 0.0], [0.0, 1.1, -0.7], [np.cos(0.3), 0.0, 0.0]])
     assert np.abs(ours - expected).max() < 1e-6
+
+
+def test_polish_keeps_a_palette_inside_the_layouts_lightness_band():
+    """Refinement runs after the search, so nothing else would catch an escape upward."""
+    layout = Layout((1,) * 12, chroma_groups=(0,) * 12, lightness_floor=0.60, lightness_ceiling=0.85)
+    rng = np.random.default_rng(11)
+    for _ in range(4):
+        oklch, _ = polish(rng.uniform(0.05, 0.95, layout.n_params), layout)
+        assert oklch[:, 0].min() >= 0.60 - 1e-9
+        assert oklch[:, 0].max() <= 0.85 + 1e-9

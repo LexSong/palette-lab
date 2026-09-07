@@ -212,3 +212,52 @@ def test_softmax_rows_sum_to_one():
     weights = search._softmax(logits)
     assert weights.sum(axis=1) == pytest.approx(np.ones(10))
     assert weights.min() > 0.0
+
+
+@pytest.mark.parametrize("ceiling", [-0.01, 0.0, 0.99, 1.5])
+def test_layout_rejects_a_lightness_ceiling_outside_the_range(ceiling):
+    with pytest.raises(ValueError):
+        Layout((6, 6), lightness_ceiling=ceiling)
+
+
+def test_layout_rejects_a_ceiling_at_or_below_its_floor():
+    with pytest.raises(ValueError):
+        Layout((6, 6), lightness_floor=0.60, lightness_ceiling=0.60)
+    with pytest.raises(ValueError):
+        Layout((6, 6), lightness_floor=0.70, lightness_ceiling=0.60)
+
+
+def test_a_lightness_ceiling_lowers_the_top_of_the_decoded_range():
+    floor, ceiling = 0.60, 0.85
+    layout = Layout((6, 6), lightness_floor=floor, lightness_ceiling=ceiling)
+    assert layout.lightness_range == (floor, ceiling)
+    oklch, lightness, _ = search.decode(random_params(layout, 64, seed=5), layout)
+    assert lightness.min() >= floor
+    assert lightness.max() <= ceiling
+    assert oklch[:, :, 0].max() <= ceiling
+
+
+def test_a_label_replaces_the_name_built_from_ring_sizes():
+    """Twelve rings would otherwise be called "1+1+...+1", which is no use as a filename."""
+    layout = Layout((1,) * 12, chroma_groups=(0,) * 12, label="bright12")
+    assert layout.name == "bright12"
+    assert layout.slug == "bright12"
+    assert Layout((6, 6)).name == "6+6", "a layout without a label keeps the sizes"
+
+
+def test_the_baseline_grid_coarsens_so_many_rings_still_fit():
+    """The enumeration is more than exponential in ring count, so the grid has to give."""
+    assert search.baseline_resolution(2) == search.BASELINE_LIGHTNESS_STEPS
+    assert search.baseline_resolution(3) == search.BASELINE_LIGHTNESS_STEPS, "shipped layouts keep the fine grid"
+    for rings in (2, 3, 4, 6, 12):
+        steps = search.baseline_resolution(rings)
+        assert steps >= 2
+        assert search.baseline_grid_size(rings, steps) <= search.BASELINE_MAX_CANDIDATES
+
+
+def test_the_baseline_stays_inside_a_layouts_lightness_band():
+    layout = Layout((1,) * 12, chroma_groups=(0,) * 12, lightness_floor=0.60, lightness_ceiling=0.85)
+    _, params = search.equal_spacing_baseline(layout)
+    oklch, _, _ = search.decode(params[None, :], layout)
+    assert oklch[:, :, 0].min() >= 0.60 - 1e-9
+    assert oklch[:, :, 0].max() <= 0.85 + 1e-9

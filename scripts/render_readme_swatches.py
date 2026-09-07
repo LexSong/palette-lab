@@ -15,16 +15,18 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
 from palette_lab import palette as palette_module
+from palette_lab import plot
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_DIR = REPO_ROOT / "images"
 
-# (output stem, results file). README leads with 5+5+2 and then shows the two
+# (output stem, results file). README leads with 5+5+2, then bright12, then the two
 # shared-chroma layouts. The independent-chroma 6+6 and 5+7 are left out: each looks
 # nearly identical to its shared-chroma twin, so they earn a place in EXPERIMENTS.md's
 # numbers but not an image here.
 PALETTES = [
     ("5+5+2", "5+5+2.json"),
+    ("bright12", "bright12.json"),
     ("6+6", "6+6-sharedC.json"),
     ("5+7", "5+7-sharedC.json"),
 ]
@@ -72,8 +74,9 @@ def render(hexes, output_path):
 def main():
     for stem, filename in PALETTES:
         loaded = palette_module.load(REPO_ROOT / "results" / filename)
-        order = sorted(range(len(loaded.hexes)), key=lambda i: loaded.oklch[i, 2])
-        hexes = [loaded.hexes[i] for i in order]
+        # `plot.hue_order` wraps hue before sorting, so a color stored at 371 degrees lands
+        # first here as it does in the figure. Sorting on the raw value would put it last.
+        hexes = [loaded.hexes[int(index)] for index in plot.hue_order(loaded)]
         render(hexes, OUTPUT_DIR / f"{stem}.png")
     return 0
 

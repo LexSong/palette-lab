@@ -177,9 +177,10 @@ def polish(unit_params, layout, max_iterations=300):
             "jac": lambda z: _jacobian(constraint_values, z),
         }
     ]
-    # Refinement runs after the search, and nothing re-checks the layout's floor
-    # afterwards, so the bounds have to carry it here too.
-    lightness_bounds = (max(LIGHTNESS_BOUNDS[0], layout.lightness_range[0]), LIGHTNESS_BOUNDS[1])
+    # Refinement runs after the search, and nothing re-checks the layout's lightness range
+    # afterwards, so the bounds have to carry both ends of it here too.
+    low, high = layout.lightness_range
+    lightness_bounds = (max(LIGHTNESS_BOUNDS[0], low), min(LIGHTNESS_BOUNDS[1], high))
     bounds = (
         [(0.0, 1.0)]
         + [lightness_bounds] * layout.n_rings

@@ -8,7 +8,9 @@ The score is the smallest CIEDE2000 distance over all 66 pairs. We maximize it, 
 palette's worst confusion is as mild as it can be.
 """
 
+import functools
 import itertools
+import math
 from dataclasses import dataclass
 
 import numpy as np
@@ -34,6 +36,11 @@ TIEBREAK_WEIGHT = 1e-3
 # Appended to a layout name when every ring takes the same chroma, as in "6+6:C".
 SHARED_CHROMA_SUFFIX = ":C"
 
+# The equal-spacing baseline enumerates one lightness per ring off a shared grid. These
+# cap that enumeration: the grid starts at 97 points and coarsens until it fits.
+BASELINE_LIGHTNESS_STEPS = 97
+BASELINE_MAX_CANDIDATES = 200_000
+
 
 @dataclass(frozen=True)
 class Layout:
@@ -51,12 +58,22 @@ class Layout:
     `lightness_floor` raises the bottom of the lightness range for this layout alone. It is
     a guard rather than a target: it is usually inactive at the optimum, and it is there to
     keep the search out of a basin whose colors are too dark to ship.
+
+    `lightness_ceiling` closes the top the same way. A floor alone only holds one end, and
+    the search will spend the other: given a floor it pushes a color to L~0.96, which is
+    near-invisible on white and gains separation the dimmest screens cannot show. Closing
+    both ends is what makes a palette for a dark or dimmed display.
+
+    `label` names the layout when the ring sizes do not. `(1,) * 12` would otherwise be
+    called "1+1+1+1+1+1+1+1+1+1+1+1", which is no use as a heading or a filename.
     """
 
     sizes: tuple[int, ...]
     shared_chroma: bool = False
     chroma_groups: tuple[int, ...] = ()
     lightness_floor: float | None = None
+    lightness_ceiling: float | None = None
+    label: str = ""
 
     def __post_init__(self):
         if sum(self.sizes) != N_COLORS:
@@ -72,6 +89,11 @@ class Layout:
                 raise ValueError(f"chroma_groups {self.chroma_groups} contradicts shared_chroma")
         if self.lightness_floor is not None and not LIGHTNESS_RANGE[0] <= self.lightness_floor < LIGHTNESS_RANGE[1]:
             raise ValueError(f"lightness_floor {self.lightness_floor} must sit inside {LIGHTNESS_RANGE}")
+        if self.lightness_ceiling is not None and not LIGHTNESS_RANGE[0] < self.lightness_ceiling <= LIGHTNESS_RANGE[1]:
+            raise ValueError(f"lightness_ceiling {self.lightness_ceiling} must sit inside {LIGHTNESS_RANGE}")
+        low, high = self.lightness_range
+        if low >= high:
+            raise ValueError(f"lightness range {(low, high)} is empty, so no palette fits in it")
         # Store the slots explicitly, so a layout that spelled them out and one that left
         # `shared_chroma` to imply them compare equal and survive a JSON round trip.
         object.__setattr__(self, "chroma_groups", self._implied_groups())
@@ -90,13 +112,19 @@ class Layout:
 
     @property
     def lightness_range(self):
-        """The (low, high) lightness the search may use, after any floor this layout sets."""
-        if self.lightness_floor is None:
-            return LIGHTNESS_RANGE
-        return (self.lightness_floor, LIGHTNESS_RANGE[1])
+        """The (low, high) lightness the search may use, after any floor and ceiling this layout sets."""
+        low = LIGHTNESS_RANGE[0]
+        if self.lightness_floor is not None:
+            low = self.lightness_floor
+        high = LIGHTNESS_RANGE[1]
+        if self.lightness_ceiling is not None:
+            high = self.lightness_ceiling
+        return (low, high)
 
     @property
     def name(self):
+        if self.label:
+            return self.label
         name = "+".join(str(size) for size in self.sizes)
         if self.shared_chroma:
             return name + SHARED_CHROMA_SUFFIX
@@ -202,13 +230,38 @@ def score(unit_params, layout, indices=None):
     return minimum + TIEBREAK_WEIGHT * mean
 
 
-def equal_spacing_baseline(layout, n_lightness=97):
+def baseline_grid_size(n_rings, n_lightness):
+    """How many candidates the equal-spacing enumeration would build."""
+    return math.comb(n_lightness + n_rings - 1, n_rings)
+
+
+def baseline_resolution(n_rings, n_lightness=BASELINE_LIGHTNESS_STEPS):
+    """The finest lightness grid this many rings can afford, down to a floor of 2 points.
+
+    The enumeration is combinations with replacement, so its size is more than exponential
+    in the ring count: 4753 candidates at two rings on a 97-point grid, 157k at three,
+    3.9M at four, and past that it does not fit in memory. Coarsening the grid keeps the
+    check affordable, and a coarser baseline is still a valid floor because the search has
+    to clear it either way.
+    """
+    while n_lightness > 2 and baseline_grid_size(n_rings, n_lightness) > BASELINE_MAX_CANDIDATES:
+        n_lightness -= 1
+    return n_lightness
+
+
+@functools.cache
+def equal_spacing_baseline(layout, n_lightness=None):
     """Best minimum delta-E with evenly spaced hues and aligned rings, over a lightness grid.
 
     This is a floor, not the best even-spacing palette. Rotating one ring against the
     other beats it, by 3.8% on 6+6. The search has to clear this floor or it did not earn
     its runtime, and it clears it by about 28%. Returns the value and its parameters.
+
+    The grid coarsens as rings multiply, so this stays affordable at any ring count. At
+    twelve rings it is two points per ring, which is a weak floor but still a real one.
     """
+    if n_lightness is None:
+        n_lightness = baseline_resolution(layout.n_rings)
     low, high = layout.lightness_range
     grid = np.linspace(low, high, n_lightness)
     n_rings = layout.n_rings
@@ -229,7 +282,9 @@ def equal_spacing_baseline(layout, n_lightness=97):
     oklch, _, _ = decode(candidates, layout)
     minimum, _ = delta_e_stats(oklch)
     best = int(np.argmax(minimum))
-    return float(minimum[best]), candidates[best]
+    # The result is cached and `Layout` is frozen, so hand back a copy: a caller that
+    # wrote through this array would corrupt every later call.
+    return float(minimum[best]), candidates[best].copy()
 
 
 def search_layout(layout, restarts=12, max_evaluations=4000, seed=0, verbose=False):
@@ -248,6 +303,8 @@ def search_layout(layout, restarts=12, max_evaluations=4000, seed=0, verbose=Fal
     indices = color.triu_indices(N_COLORS)
     bounds = np.tile([0.0, 1.0], (layout.n_params, 1))
 
+    # Cached, so repeated runs of one layout in a process pay the enumeration once. It
+    # dominates a short run: 18.8s of a 18.3s single-restart search on 5+5+2.
     baseline_value, baseline_params = equal_spacing_baseline(layout)
     found = [(float(score(baseline_params[None, :], layout, indices)[0]), baseline_params)]
 

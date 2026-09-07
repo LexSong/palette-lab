@@ -10,8 +10,10 @@ share a chroma. Every ring sharing one is written `6+6:C`. Rings sharing in grou
 written as the slot each ring draws from, so `5+5+2` with `(0, 1, 1)` gives ring 0 its
 own chroma and welds rings 1 and 2 to a second.
 
-A layout may also set a **lightness floor**, which raises the bottom of the range the
-search may use. `5+5+2` sets 0.45.
+A layout may also set a **lightness floor** and a **lightness ceiling**, which close the
+bottom and the top of the range the search may use. `5+5+2` sets a floor of 0.45.
+`bright12` sets both, 0.60 and 0.85, and gives every color its own ring, so "ring" there
+means one color rather than a group.
 
 "Hard to confuse" means CIEDE2000. The search maximizes the *smallest* distance over all
 66 pairs, so the palette's worst confusion is as mild as it can be. Every color stays
@@ -27,8 +29,9 @@ uv run scripts/experiment_6plus6.py --plot                  # ~12 s -> results/6
 uv run scripts/experiment_5plus7.py --plot
 uv run scripts/experiment_6plus6_shared_chroma.py --plot
 uv run scripts/experiment_5plus7_shared_chroma.py --plot
+uv run scripts/experiment_bright12.py --restarts 40 --evals 5000 --plot   # ~5 min
 
-for e in scripts/experiment_*.py; do uv run "$e" --plot; done   # all five, ~77 s
+for e in scripts/experiment_*.py; do uv run "$e" --plot; done   # all six
 
 uv run scripts/visualize_palette.py results/6+6.json            # re-render one
 uv run scripts/visualize_palette.py results/6+6-sharedC.json --dark
@@ -45,6 +48,10 @@ uv run scripts/render_readme_swatches.py     # regenerate images/*.png for READM
 | 6+6:C | 25.07 | 24.88 | L=0.548, L=0.797, both C=0.119 |
 | 5+7 | 24.85 | 24.76 | L=0.497 C=0.096, L=0.719 C=0.153 |
 | 5+7:C | 24.82 | 24.67 | L=0.515, L=0.738, both C=0.137 |
+| bright12 | 24.13 | 23.82 | 12 rings in L=0.600..0.850, all C=0.135 |
+
+`bright12` needs `--restarts 40 --evals 5000` to reach that. It carries 25 free parameters
+against 15 to 17 for the ringed layouts, and the defaults leave it short.
 
 `5+5+2` wins by 12.1% over `6+6`, and its third lightness is where that comes from.
 Among the two-lightness layouts, pick `6+6` for the highest exact separation and
@@ -74,6 +81,11 @@ ordering flips back: `5+7:C` loses 0.08 to `5+7`, where `6+6:C` gains 0.12 over 
 `#ab505e` `#a45c1d` `#777600` `#00865c` `#007aad` `#7a60ad`
 `#ff9ca9` `#f5aa6b` `#bac669` `#56d6bc` `#61cbfb` `#c7acff`
 
+`bright12`:
+
+`#c25a6f` `#ff9676` `#b66c00` `#fdc35e` `#828900` `#bcdd76`
+`#009865` `#4feacf` `#41d1ff` `#3584cd` `#946dc5` `#ff9fdb`
+
 ## Why 5+5+2 groups its chroma, and why it needs a floor
 
 Give the optimizer a freedom and it spends part of it going gray, because a low chroma at
@@ -91,6 +103,10 @@ The last row is a palette with `#fff9fc` in it, a white with a rumour of pink, a
 `#404d34`, a dark olive-gray pressed against the floor. Both score well and neither is a
 chart color. `6+6:C`'s real protection was never the ring: one shared chroma forced all
 twelve to stay colorful.
+
+`bright12` is the same twelve free colors as that last row and has none of the problem,
+because one shared chroma leaves no color free to go gray alone. It gives up separation
+for it — 24.13 against 34.60 — and every color it keeps is one you would put on a chart.
 
 **A lightness floor alone relocates the escape rather than closing it.** Free, `5+5+2`
 sends its two-color ring to L=0.206. Floored at 0.40 it sends the same ring to L=0.925 and
@@ -110,12 +126,83 @@ the palette scores 28.00, 0.6% below flooring. Fix it at 0.6 and a *free* ring t
 the dark job at L=0.338. Requiring every color above 0.6 costs the whole gain: 24.94,
 below `6+6`.
 
+## Why bright12 has a ceiling, and what the band costs
+
+`bright12` is the only layout here built for a dark surface rather than a page. It gives
+each of the twelve colors its own lightness, welds all twelve to one chroma, and holds
+every one inside `0.60 <= L <= 0.85`.
+
+The ceiling is the part worth explaining. A floor alone constrains one end, and the
+search spends the other: given only `L >= 0.60` it puts a color at L=0.961. That buys
+separation a dimmed screen cannot show, and it is invisible on white. Closing the top is
+nearly free.
+
+| twelve free colors, one chroma | min ΔE00 | C | L range | worst on white |
+|---|---|---|---|---|
+| L >= 0.45 | 28.90 | 0.123 | 0.450..0.977 | 1.05:1 |
+| L >= 0.55 | 26.32 | 0.116 | 0.550..0.928 | 1.19:1 |
+| L >= 0.60 | 24.65 | 0.137 | 0.600..0.961 | 1.09:1 |
+| L in [0.60, 0.90] | 24.53 | 0.139 | 0.600..0.900 | 1.28:1 |
+| **L in [0.60, 0.85]** | **24.13** | **0.135** | 0.600..0.850 | 1.50:1 |
+
+Dropping the ceiling from 0.90 to 0.85 costs 1.6% and is what keeps the palette off the
+top of the range.
+
+The point of the band is what happens when the display dims. Scaling linear output by a
+backlight factor, with the viewer's white point left at ambient, gives:
+
+| backlight | 100% | 50% | 25% | 10% |
+|---|---|---|---|---|
+| bright12 | 24.1 | 20.0 | **15.8** | **10.6** |
+| 5+5+2 | **28.2** | **21.5** | 15.1 | 10.2 |
+| 6+6:C | 25.1 | 21.3 | 14.4 | 9.2 |
+| 5+7:C | 24.8 | 20.2 | 14.5 | 8.5 |
+
+`bright12` starts last and finishes first. `5+7:C` falls furthest because its darkest
+color sits at L=0.515 and crushes toward black; `bright12` has nothing below 0.600.
+
+Do not measure this by compressing Oklab lightness toward the palette's own mean. That
+converges every color on mid-grey, which flatters a palette whose binding pairs share a
+lightness and hides the cost of being dark — it ranks `5+7:C` first, the reverse of the
+result above.
+
+## Why one chroma costs less at twelve rings than at three
+
+A ring's shared chroma is capped by the worst hue anywhere on that ring, so the fewer
+colors per ring, the higher the ceiling. Forcing one chroma onto three rings is expensive;
+onto twelve one-color rings it is not.
+
+| layout | rings | one chroma | its C |
+|---|---|---|---|
+| 5+5+2 | 3 | 26.30 | 0.096 |
+| 4+4+4 | 3 | 26.20 | 0.101 |
+| 4+3+3+2 | 4 | 27.50 | 0.137 |
+| 4+6+1+1 | 4 | 27.68 | 0.142 |
+| bright12 | 12 | 24.13 | 0.135 |
+
+This is why `bright12` can be uniform in saturation without looking washed out, and why
+`5+5+2` needs two chroma groups to avoid exactly that.
+
 ## What was tried and dropped
 
 One ring of 12 reaches 14.60. A single lightness leaves CIEDE2000 nothing to work with
 but hue, so two rings beat one by 72%.
 
 `4+8` reaches 21.80 and `3+9` reaches 19.45. Past `5+7` the split gets too uneven to pay.
+
+Moving a color out of `5+5+2`'s dark ring loses either way: `4+5+3` reaches 27.73 and
+`4+6+2` reaches 26.78, against 28.17. Five is the right size for the dark ring, and it is
+the only one of these whose floor stays inactive — every layout with four or fewer dark
+colors settles hard against `L >= 0.45` and wants to go lower.
+
+Equal thirds are worse still. `4+4+4` reaches 27.63 with grouped chroma, because the
+brightest ring's size sets how bright it can be: one color reaches L=0.977, two reach
+0.903, four only 0.851. Near white the gamut narrows, so four colors up there cannot
+spread on hue and the search refuses to go.
+
+Giving the light end solo rings works for the same reason. `4+6+1+1` puts cyan alone at
+L=0.886 and a pale yellow-green alone at 0.943 — the two hues whose chroma peaks highest
+in sRGB — and reaches the highest shared chroma of any one-chroma layout tried, 0.142.
 
 ## Why the two rings land on the same hues
 
@@ -186,6 +273,18 @@ scripts/
   times. One per restart costs nothing on the four layouts here, because 15-16
   parameters converge either way. It matters at higher dimension: on a 36-parameter
   layout a global top-3 reached 35.21, where one per restart reached 36.20.
+- **The equal-spacing baseline** enumerates one lightness per ring off a shared grid, so
+  its size is more than exponential in the ring count: 4753 candidates at two rings on a
+  97-point grid, 157k at three, 3.9M at four. The grid coarsens until the enumeration fits
+  in 200k candidates, which leaves two and three rings on the full 97 points and gives
+  `bright12` nine. A coarser baseline is a weaker floor but still a real one, and the
+  search has to clear it either way.
+- **The figure** plots hue against lightness, not the Oklab a/b plane. Those are the two
+  axes a reader separates colors by, and the pair a dimmed screen attacks, so a palette
+  built for dark backgrounds has to show both. The a/b wheel dropped lightness entirely.
+  Every panel numbers the colors in hue order; the stored order groups them by ring,
+  because `ring_of_color` and `verify` depend on that, so the reordering is in the view
+  only.
 - **The JSON** stores only what cannot be recomputed: the layout, 12 OKLCh triples, the
   settings, and the two headline numbers. About 2.3 KB. Hex, the ΔE matrix and the binding
   pairs are derived on load in roughly 1 ms, so a stored number can never drift from the

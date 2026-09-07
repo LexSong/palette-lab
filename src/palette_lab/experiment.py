@@ -18,6 +18,9 @@ from palette_lab.search import search_layout
 
 DEFAULT_OUTPUT_DIR = Path("results")
 
+# Past this many rings the summary line prints a lightness span instead of every ring.
+MAX_RINGS_LISTED = 4
+
 
 def parse_args(argv=None, description=None):
     parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -58,10 +61,12 @@ def verify(oklch, layout, baseline):
                 f"{layout.name}: chroma varies by {spread:.3e} across slot {slot} but its rings are meant to share it"
             )
 
-    floor = layout.lightness_range[0]
-    darkest = float(oklch[:, 0].min())
+    floor, ceiling = layout.lightness_range
+    darkest, lightest = float(oklch[:, 0].min()), float(oklch[:, 0].max())
     if darkest < floor - 1e-9:
         raise AssertionError(f"{layout.name}: lightness {darkest:.4f} is under the layout floor {floor}")
+    if lightest > ceiling + 1e-9:
+        raise AssertionError(f"{layout.name}: lightness {lightest:.4f} is over the layout ceiling {ceiling}")
 
     minimum = float(color.pairwise_delta_e(color.linear_srgb_to_lab(linear)).min())
     if minimum < baseline - 1e-9:
@@ -125,10 +130,15 @@ def main(layout, argv=None, description=None):
 
     json_path = args.out_dir / f"{layout.slug}.json"
     palette_module.save(palette, json_path)
+    # One ring per color would print twelve of these, so past a handful give the span instead.
+    if layout.n_rings <= MAX_RINGS_LISTED:
+        rings = "  ".join(f"L={value:.3f} C={chroma:.3f}" for value, chroma in palette.rings)
+    else:
+        lightness, chroma = palette.oklch[:, 0], palette.oklch[:, 1]
+        rings = f"{layout.n_rings} rings, L={lightness.min():.3f}..{lightness.max():.3f} C={chroma.min():.3f}"
     print(
         f"{layout.name:>6}  min dE00 {palette.min_delta_e:7.3f}"
-        f"  ({palette.min_delta_e_quantized:7.3f} at 8-bit)"
-        f"  rings {'  '.join(f'L={value:.3f} C={chroma:.3f}' for value, chroma in palette.rings)}"
+        f"  ({palette.min_delta_e_quantized:7.3f} at 8-bit)  rings {rings}"
     )
     print(f"  {' '.join(palette.hexes)}")
     print(f"  wrote {json_path}")

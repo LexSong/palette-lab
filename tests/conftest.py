@@ -22,6 +22,7 @@ EXPERIMENTS = [
     Layout((6, 6), shared_chroma=True),
     Layout((5, 7), shared_chroma=True),
     Layout((5, 5, 2), chroma_groups=(0, 1, 1), lightness_floor=0.45),
+    Layout((1,) * 12, chroma_groups=(0,) * 12, lightness_floor=0.60, lightness_ceiling=0.85, label="bright12"),
 ]
 
 

@@ -15,6 +15,7 @@ from palette_lab import palette as palette_module
 from palette_lab.palette import BINDING_TOLERANCE
 from palette_lab.palette import Palette
 from palette_lab.search import Layout
+from tests.conftest import build_palette
 
 
 def test_palette_rejects_a_wrong_shaped_array():
@@ -166,3 +167,19 @@ def test_slug_is_a_usable_filename():
     assert Layout((6, 6), shared_chroma=True).name == "6+6:C"
     assert Layout((6, 6), shared_chroma=True).slug == "6+6-sharedC"
     assert ":" not in Layout((6, 6), shared_chroma=True).slug
+
+
+def test_a_schema_4_file_still_loads(tmp_path):
+    """The four palettes shipped before the ceiling existed are schema 4 documents."""
+    layout = Layout((5, 5, 2), chroma_groups=(0, 1, 1), lightness_floor=0.45)
+    document = palette_module.to_document(build_palette(layout))
+    document["schema"] = 4
+    document["experiment"].pop("lightness_ceiling")
+    document["experiment"].pop("label")
+    path = tmp_path / "schema4.json"
+    path.write_text(json.dumps(document), encoding="utf-8")
+
+    restored = palette_module.load(path)
+    assert restored.layout.lightness_ceiling is None
+    assert restored.layout.label == ""
+    assert restored.layout == layout

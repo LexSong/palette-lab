@@ -19,10 +19,10 @@ from palette_lab import color
 from palette_lab.search import N_COLORS
 from palette_lab.search import Layout
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 # Version 3 predates chroma groups and the lightness floor. Its files are still valid,
 # so we read them and derive the groups from `shared_chroma`, which is what they store.
-READABLE_SCHEMAS = (3, 4)
+READABLE_SCHEMAS = (3, 4, 5)
 
 # How close to the minimum a pair has to sit to count as binding. CIEDE2000 values run
 # 15-70 here, so 0.05 is tight enough that only genuinely pinned pairs qualify.
@@ -170,6 +170,8 @@ def to_document(palette):
             "shared_chroma": palette.layout.shared_chroma,
             "chroma_groups": list(palette.layout.groups),
             "lightness_floor": palette.layout.lightness_floor,
+            "lightness_ceiling": palette.layout.lightness_ceiling,
+            "label": palette.layout.label,
             **palette.config,
         },
         "result": {
@@ -198,6 +200,8 @@ def from_document(document):
         experiment.pop("shared_chroma"),
         tuple(experiment.pop("chroma_groups", ()) or ()),
         experiment.pop("lightness_floor", None),
+        experiment.pop("lightness_ceiling", None),
+        experiment.pop("label", "") or "",
     )
     experiment.pop("layout", None)
     oklch = np.array([entry["oklch"] for entry in document["colors"]], dtype=float)
