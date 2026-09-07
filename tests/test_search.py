@@ -176,7 +176,10 @@ def test_score_is_the_minimum_plus_a_sliver_of_the_mean():
 
 @pytest.mark.parametrize("layout", ALL_LAYOUTS, ids=lambda layout: layout.name)
 def test_equal_spacing_baseline_really_is_equally_spaced(layout):
-    value, params = search.equal_spacing_baseline(layout, n_lightness=13)
+    # The grid is irrelevant here — this checks the hues the baseline returns, not which
+    # lightnesses it searched. Keep it at 3: the enumeration is combinations with
+    # replacement, so one point per ring more is 2.7M candidates at twelve rings and 255s.
+    value, params = search.equal_spacing_baseline(layout, n_lightness=3)
     oklch, _, _ = search.decode(params[None, :], layout)
     for ring, size in enumerate(layout.sizes):
         hues = np.sort(oklch[0, layout.ring_of_color == ring, 2] % 360.0)
@@ -257,7 +260,7 @@ def test_the_baseline_grid_coarsens_so_many_rings_still_fit():
 
 def test_the_baseline_stays_inside_a_layouts_lightness_band():
     layout = Layout((1,) * 12, chroma_groups=(0,) * 12, lightness_floor=0.60, lightness_ceiling=0.85)
-    _, params = search.equal_spacing_baseline(layout)
+    _, params = search.equal_spacing_baseline(layout, n_lightness=3)
     oklch, _, _ = search.decode(params[None, :], layout)
     assert oklch[:, :, 0].min() >= 0.60 - 1e-9
     assert oklch[:, :, 0].max() <= 0.85 + 1e-9
