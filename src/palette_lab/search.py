@@ -193,10 +193,17 @@ def equal_spacing_baseline(layout, n_lightness=97):
 
 
 def search_layout(layout, restarts=12, max_evaluations=4000, seed=0, verbose=False):
-    """Run CMA-ES with restarts. Returns (parameter vectors best first, baseline value).
+    """Run CMA-ES with restarts. Returns (one parameter vector per restart best first, baseline value).
 
     Each generation is decoded and scored in one batch, so the color math runs once per
     generation rather than once per candidate. That is where the speed comes from.
+
+    We keep the best candidate of each restart, not the best candidates overall. A restart
+    improves monotonically, so its last generations all sit in one basin and crowd out
+    every other restart from the top of a global ranking. The caller then refines three
+    copies of one solution instead of three different ones. Ranking by restart hands it
+    one representative per basin, which is what refinement needs, because the CMA-ES score
+    does not predict how far SLSQP will carry a candidate.
     """
     indices = color.triu_indices(N_COLORS)
     bounds = np.tile([0.0, 1.0], (layout.n_params, 1))
@@ -215,16 +222,20 @@ def search_layout(layout, restarts=12, max_evaluations=4000, seed=0, verbose=Fal
 
         optimizer = CMA(mean=mean, sigma=0.25, bounds=bounds, seed=int(rng.integers(1 << 31)))
         used = 0
+        best_of_restart = (-np.inf, None)
         while used < max_evaluations and not optimizer.should_stop():
             batch = np.array([optimizer.ask() for _ in range(optimizer.population_size)])
             values = score(batch, layout, indices)
             optimizer.tell([(batch[i], -float(values[i])) for i in range(len(batch))])
             used += len(batch)
             best = int(np.argmax(values))
-            found.append((float(values[best]), batch[best].copy()))
+            if values[best] > best_of_restart[0]:
+                best_of_restart = (float(values[best]), batch[best].copy())
 
+        if best_of_restart[1] is not None:
+            found.append(best_of_restart)
         if verbose:
-            print(f"  {layout.name} restart {restart:2d}: best {max(v for v, _ in found):8.4f} after {used} evals")
+            print(f"  {layout.name} restart {restart:2d}: best {best_of_restart[0]:8.4f} after {used} evals")
 
     found.sort(key=lambda item: -item[0])
     return [params for _, params in found], baseline_value

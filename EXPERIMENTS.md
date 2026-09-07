@@ -17,12 +17,12 @@ inside sRGB.
 One script per experiment. Each writes its own JSON, and `--plot` adds the figure.
 
 ```sh
-uv run scripts/experiment_6plus6.py --plot                  # ~11 s -> results/6+6.json
+uv run scripts/experiment_6plus6.py --plot                  # ~12 s -> results/6+6.json
 uv run scripts/experiment_5plus7.py --plot
 uv run scripts/experiment_6plus6_shared_chroma.py --plot
 uv run scripts/experiment_5plus7_shared_chroma.py --plot
 
-for e in scripts/experiment_*.py; do uv run "$e" --plot; done   # all four, ~43 s
+for e in scripts/experiment_*.py; do uv run "$e" --plot; done   # all four, ~50 s
 
 uv run scripts/visualize_palette.py results/6+6.json            # re-render one
 uv run scripts/visualize_palette.py results/6+6-sharedC.json --dark
@@ -57,8 +57,8 @@ ordering flips back: `5+7:C` loses 0.08 to `5+7`, where `6+6:C` gains 0.12 over 
 
 `6+6:C`:
 
-`#ff9ca9` `#f5aa6b` `#bdc567` `#56d6bc` `#61cbfb` `#c7acff`
 `#ab505e` `#a45c1d` `#777600` `#00865c` `#007aad` `#7a60ad`
+`#ff9ca9` `#f5aa6b` `#bac669` `#56d6bc` `#61cbfb` `#c7acff`
 
 ## What was tried and dropped
 
@@ -120,7 +120,22 @@ scripts/
   every candidate is in gamut by construction and the search needs no penalty term. A
   whole CMA-ES population is scored in one batched call.
 - **The polish** solves `maximize t` subject to `ΔE00 ≥ t`, which is smooth where the raw
-  `min` is not. Worth about 2%.
+  `min` is not. Worth about 2%. Then a second stage freezes `t` and maximizes the mean.
+  Without it the palette is underdetermined: a color in no binding pair never enters the
+  active constraints, so the objective is flat in its direction and SLSQP stops wherever
+  its iteration lands. `6+6:C` has one such color and `5+7` has five. The stages are
+  lexicographic rather than a weighted sum, because `min + w * mean` would sell real
+  minimum for mean, and the minimum is the number we rank on.
+- **Choosing between refined candidates** ranks on the minimum, then on the mean. They
+  tie on the minimum often — 11 of 13 on `6+6` — and ranking on the minimum alone hands
+  the win to whichever tied candidate came first. That is worth 0.27 of mean ΔE00 on
+  `5+7:C`, where two candidates reach the same worst pair at means of 43.62 and 43.89.
+- **The restarts** each contribute one candidate, their own best, not their best few. A
+  restart improves monotonically, so its late generations fill the top of any global
+  ranking and crowd every other restart out, and then we refine one solution three
+  times. One per restart costs nothing on the four layouts here, because 15-16
+  parameters converge either way. It matters at higher dimension: on a 36-parameter
+  layout a global top-3 reached 35.21, where one per restart reached 36.20.
 - **The JSON** stores only what cannot be recomputed: the layout, 12 OKLCh triples, the
   settings, and the two headline numbers. About 2.3 KB. Hex, the ΔE matrix and the binding
   pairs are derived on load in roughly 1 ms, so a stored number can never drift from the

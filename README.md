@@ -7,7 +7,7 @@ Twelve categories on one chart, and every one of them tells itself apart.
 ![6+6](images/6+6.png)
 
 ```
-#ff9ca9  #ab505e  #a45c1d  #f5aa6b  #777600  #bdc567
+#ff9ca9  #ab505e  #a45c1d  #f5aa6b  #777600  #bac669
 #00865c  #56d6bc  #61cbfb  #007aad  #7a60ad  #c7acff
 ```
 
@@ -20,7 +20,7 @@ legend.
 ![5+7](images/5+7.png)
 
 ```
-#a73f52  #f48870  #a34a00  #da9d33  #9cb74d  #2d7b2c
+#a73f52  #f48870  #a34a00  #da9d33  #9cb74d  #2c7b2c
 #00c6a8  #00bce8  #006bb1  #98a0ff  #7b4fa6  #e685bf
 ```
 

@@ -12,6 +12,7 @@ import numpy as np
 from palette_lab import color
 from palette_lab import palette as palette_module
 from palette_lab import plot
+from palette_lab.polish import MINIMUM_TOLERANCE
 from palette_lab.polish import polish
 from palette_lab.search import search_layout
 
@@ -22,7 +23,9 @@ def parse_args(argv=None, description=None):
     parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--restarts", type=int, default=12, help="CMA-ES restarts (default: 12)")
     parser.add_argument("--evals", type=int, default=4000, help="evaluations per restart (default: 4000)")
-    parser.add_argument("--polish-top", type=int, default=3, help="CMA-ES solutions to refine (default: 3)")
+    parser.add_argument(
+        "--polish-top", type=int, default=None, help="CMA-ES solutions to refine (default: every restart)"
+    )
     parser.add_argument("--seed", type=int, default=0, help="base seed (default: 0)")
     parser.add_argument(
         "--out-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help=f"where the JSON goes (default: {DEFAULT_OUTPUT_DIR})"
@@ -58,17 +61,30 @@ def verify(oklch, layout, baseline):
     return minimum
 
 
-def run(layout, restarts=12, evals=4000, polish_top=3, seed=0, verbose=False):
-    """Search, refine and check one layout. Returns a Palette."""
+def run(layout, restarts=12, evals=4000, polish_top=None, seed=0, verbose=False):
+    """Search, refine and check one layout. Returns a Palette.
+
+    `polish_top` of None refines every candidate `search_layout` returns, which is one per
+    restart plus the baseline. Refining them all is what makes the restarts worth running:
+    the CMA-ES score does not say how far SLSQP will carry a candidate, so the best
+    refined palette often comes from a restart that did not rank first.
+    """
     candidates, baseline = search_layout(layout, restarts=restarts, max_evaluations=evals, seed=seed, verbose=verbose)
 
-    best_oklch, best_minimum = None, -np.inf
+    refined = []
     for params in candidates[:polish_top]:
         oklch, minimum = polish(params, layout)
-        if minimum > best_minimum:
-            best_oklch, best_minimum = oklch, minimum
-    if best_oklch is None:
+        pairs = color.pairwise_delta_e(color.oklab_to_lab(color.oklch_to_oklab(oklch)))
+        refined.append((minimum, float(pairs.mean()), oklch))
+    if not refined:
         raise ValueError(f"polish_top={polish_top} refined nothing, so there is no palette to check")
+
+    # Candidates converge on the same worst pair, so ranking on the minimum alone leaves
+    # ties, and the first one then wins by accident. Break them on the mean, which is the
+    # order both polish stages already use.
+    best_minimum = max(minimum for minimum, _, _ in refined)
+    tied = [entry for entry in refined if entry[0] >= best_minimum - MINIMUM_TOLERANCE]
+    best_oklch = max(tied, key=lambda entry: entry[1])[2]
 
     verify(best_oklch, layout, baseline)
     return palette_module.Palette(

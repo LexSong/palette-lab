@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generated": "2026-09-06T18:08:29+08:00",
+  "generated": "2026-09-07T15:42:20+08:00",
   "experiment": {
     "layout": "6+6",
     "sizes": [
@@ -12,7 +12,7 @@
     "objective": "maximin_ciede2000",
     "restarts": 12,
     "evals_per_restart": 4000,
-    "polish_top": 3,
+    "polish_top": null,
     "seed": 0
   },
   "result": {
