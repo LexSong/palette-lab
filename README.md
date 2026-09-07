@@ -11,11 +11,9 @@ Twelve categories on one chart, and every one of them tells itself apart.
 #00fff7  #00688f  #16b8ff  #b993ff  #724e8a  #fc7d92
 ```
 
-The best separation here, 12% clearer than anything else on this page. Five
-muted colors, five vivid ones, and two bright ones on top. Three brightness
-levels give the eye more to sort by than two do, and that is where the extra
-clarity comes from. Take this one unless the two bright colors are a problem
-for you — see the note below.
+The clearest twelve here, by 12%. Five muted colors, five vivid ones, and two
+bright ones on top. Twelve lines on one chart, and not one of them needs a
+second look.
 
 ## 6+6 — The Most Uniform
 
@@ -73,16 +71,14 @@ monitor and nothing dulls out on someone else's screen.
 **Nothing is too dark to use.** No color goes below Oklab lightness 0.48, so
 none of them turn to mud on a dimmed phone or a cheap projector.
 
+**Where 5+5+2 gives ground is a white background.** Its two bright colors,
+`#ffde54` and `#00fff7`, sit at 1.26:1 contrast there, so they hold up as filled
+areas and bars and go too faint for thin lines or small text. `6+6` is the safer
+pick on white, at 1.79:1 worst case. On a dark background `5+5+2` is the
+strongest of the three.
+
 Every palette is listed in hue order, swatch and code alike, so you can compare
 them row against row.
-
-### One caveat on 5+5+2
-
-Its two bright colors, `#ffde54` and `#00fff7`, sit at 1.26:1 contrast against
-white. That is faint. On a white background they work as filled areas and bars,
-and they are too weak for thin lines or small text. `6+6` is the safer choice
-there, at 1.79:1 worst case. On a dark background `5+5+2` is the strongest of
-the three.
 
 ## More Detail
 
